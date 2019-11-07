@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Title</title>
+    <meta charset="utf-8">
+    <style>
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+      /* body { font-family: 'Droid Serif'; } */
+
+      .red {
+        color: red
+      }
+
+      .remark-code-line-highlighted {
+        background-color: rgba(255,0,0,0.5);
+      }
+      .remark-code-span-highlighted {
+        background-color: rgba(255,0,0,0.5);
+      }
+
+      blockquote {
+        /* font-family: "Droid Seri"; */
+        color: rgb(122, 134, 154);
+      }
+
+      .remark-container, .remark-slide-content {
+        background-color: #fff2cc;
+        color: #c37c2b;
+        font-family: "Calibri";
+        font-size: 36px;
+      }
+
+      .remark-inline-code {
+        color: #7a5123;
+      }
+
+      .remark-slide-content p {
+        margin: 0;
+        padding: 0;
+      }
+
+      .remark-notes p {
+        margin: 0;
+        padding: 0;
+      }
+
+      .remark-notes-preview p {
+        margin: 0;
+        padding: 0;
+      }
+
+      .remark-slide-number {
+          font-size: 0px;
+          background-image: url("../images/doge-pup.png");
+          background-size: contain;
+          width: 95px;
+          height: 95px;
+      }
+
+      .remark-slide-content h1 {
+          font-size: 28px;
+      }
+
+      .remark-slide-content h2 {
+          font-size: 40px;
+      }
+
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+
+      .smallcode code { font-size: 15px; }
+
+      .smallimg img {
+        width: 1.5em;
+        vertical-align: middle;
+        border: 50px;
+      }
+
+      .translucent {
+        opacity: 0.3;
+      }
+
+      .w100img img {
+        width: 100%;
+      }
+
+      .h100img img {
+        height: 500px;
+      }
+
+      table tr:nth-child(odd) td {
+        background-color: #EEEEEE
+      }
+      table tr:nth-child(even) td {
+        background-color: #BBBBBB
+      }
+
+      .column:first-of-type {
+        float: left;
+      }
+
+      .column:last-of-type {
+        float: right;
+      }
+
+      .split-50 .column:first-of-type { width: 50% }
+      .split-50 .column:last-of-type { width: 50% }
+    </style>
+  </head>
+  <body>
+    <!-- <textarea id="source">bla</textarea> -->
+    <script src="https://remarkjs.com/downloads/remark-latest.min.js">
+    </script>
+    <script>
+        // Place all of your files here
+        sourceUrls = [
+            'talk/00-intro.md',
+            // 'talk/10-inlining.md',
+            // 'talk/20-tuples.md',
+            // 'talk/30-closures.md',
+            // 'talk/40-inline.md',
+            // 'talk/50-working.md',
+            // 'talk/60-dirty.md',
+            // 'talk/99-summary.md',
+            ]
+
+        var xmlhttp = new XMLHttpRequest();
+        var source = document.getElementById("source")
+
+        for (var i = 0; i < sourceUrls.length; i++) {
+            xmlhttp.open('GET', sourceUrls[i], false);
+            //xmlhttp.send();
+
+        //     source.innerHTML += "\n" + xmlhttp.responseText;
+        };
+
+        // source.innerHTML += "\n" + "foo" ;//
+
+        var slideshow = remark.create({
+          sourceUrl: [
+            'talk/00-intro.md',
+            ],
+          // ratio: '16:9',
+          // highlightLanguage: 'fsharp',
+          // highlightStyle: 'rainbow',
+          // highlightLines: true,
+          // highlightSpans: true,
+        });
+    </script>
+  </body>
+</html>
