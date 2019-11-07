@@ -1,6 +1,6 @@
 class: center, middle
 
-# Writing performant code in F#
+# Writing performant code in F# #
 
 ???
 
