@@ -1,13 +1,10 @@
-# Writing performant code in F\#
+class: center, middle
 
-## Title 2
-
-- point 1
-- point 2
+# Writing performant code in F#
 
 ???
 
-Notes foe me
+Notes for me
 
 ---
 
