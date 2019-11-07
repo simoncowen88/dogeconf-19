@@ -1,5 +1,14 @@
 # Writing performant code in F\#
 
+## Title 2
+
+- point 1
+- point 2
+
+???
+
+Notes foe me
+
 ---
 
 ## What to expect
