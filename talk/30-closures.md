@@ -199,8 +199,6 @@ IL_000D:  ret
 
 So what is this `go@6` type?
 
-(Named as it is declared inside `go` at line 6)
-
 ???
 
 `newobj` = allocation
@@ -268,6 +266,10 @@ let go a =
     hof closure
 ```
 
+???
+
+Named as declared in method `go` at line 6
+
 ---
 
 ## Closures - we want to go@6 faster
@@ -329,6 +331,8 @@ Still no!
 `mapper` here is a declared as a lambda, so you might assume it's already a closure.
 For good or ill F\# has optimised this by converting this to a method for you!
 
+So it's identical to our previous failure.
+
 ---
 
 ## Closures - Witty title involving go@6
@@ -341,7 +345,8 @@ let add1 xs = xs |> List.map mapper
 Finally!
 
 We *force* a closure to be created and stored, by passing our lambda through `id`.
-For good or ill F\# has *cant work out* how to optimise this!
+
+Now F\# *can't work out* how to optimise this.
 
 ---
 
@@ -355,5 +360,7 @@ Whether this is worth it depends on yur use case.
 However, we'll soon see that this attempt at 'tricking' the compiler into doing what
 we thought would be best can block other optimisations, actually hurting our performance
 significantly.
+
+Can be useful for writing allocation tests.
 
 ---

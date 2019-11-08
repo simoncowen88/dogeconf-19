@@ -1,17 +1,27 @@
 
 ### `inline` keyword
 
-Stolen from StackOverflow:
+From StackOverflow...
 
+.quote[
 > The most valuable application of the inline keyword in practice is inlining
 higher-order functions to the call site where their function arguments are also
 inlined in order to produce a singly fully-optimized piece of code.
+>
+> &nbsp;
 >
 > Note that this bears little resemblance to what inline does in most other languages.
 You can achieve a similar effect using template metaprogramming in C++ but F# can
 also inline between compiled assemblies because inline is conveyed via .NET metadata.
 >
+> &nbsp;
+>
 > For example, the inline in the following fold function makes it 5× faster:
+]
+
+---
+
+### `inline` keyword
 
 ```fsharp
 let inline fold (f : 'acc -> 'a -> 'acc) (initial : 'acc) (xs : 'a array) : 'acc =
@@ -26,8 +36,7 @@ A wonderfully inefficient way to sum the first n integers.
 
 ```fsharp
 let xs = Array.init 1000 id
-let go () =
-    fold (fun a b -> a + b) 0 xs
+let go () = xs |> fold (fun a b -> a + b) 0
 ```
 
 (perf: ~650 nanoseconds)
@@ -48,7 +57,7 @@ No! It performs worse.
 fold (fun a b -> a + b) 0 xs
 ```
 
-If fold is marked inline, then this optimises to:
+If fold is marked inline, then this (imho incredibly!) optimises to:
 
 ```fsharp
 let mutable acc = 1
