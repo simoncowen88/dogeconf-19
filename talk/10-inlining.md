@@ -1,21 +1,33 @@
 
 ## Inlining
 
+???
+
+get for free in F#
+
 --
 
 Wikipedia:
+
+.quote[
 > In computing, inline expansion, or inlining, is a manual or compiler optimization that replaces a function call site with the body of the called function.
+]
 
 --
 
-- No function call.
-- No need to pass arguments. (reduces register use)
-- Can improve locality of reference
+- No function call
+  - No need to pass arguments
+  - Can improve locality of reference
 - Allows for further optimisations
-  - Constant aruments can be propagated
-  - Higher-level optimisations (e.g. escape analysis)
+  - e.g. constant propagation / escape analysis
 
-F\# is fairly aggressive with its inlining.
+--
+
+F\# is very aggressive with its inlining.
+
+???
+
+Even across assembly boundaries
 
 ---
 
@@ -28,15 +40,15 @@ let g a = f (a + 1)
 
 What does the compiled code for `g` actually look like?
 
-## Inlining example - unoptimised
+---
 
-With no optimisations:
+## Inlining example - no optimisations
 
 ```yaml
 f:
-IL_0000:  ldc.i4.2  # load 2                      [2]
-IL_0001:  ldarg.0   # load first argument         [a;2]
-IL_0002:  mul       # multiply top stack elements [2*a]
+IL_0000:  ldc.i4.2      # load 2                      [2]
+IL_0001:  ldarg.0       # load first argument         [a;2]
+IL_0002:  mul           # multiply top stack elements [2*a]
 IL_0003:  ret
 
 g:
@@ -47,9 +59,13 @@ IL_0003:  call        f # invoke f                [f (a+1)]
 IL_0008:  ret
 ```
 
-## Inlining example - optimised
+???
 
-With optimisations:
+Look at g first
+
+---
+
+## Inlining example - optimised
 
 ```yaml
 g:
@@ -60,6 +76,8 @@ IL_0003:  add       # add                 [a+1;2]
 IL_0004:  mul       # multiply            [2*(a+1)]
 IL_0005:  ret
 ```
+
+---
 
 ## Inlining example - analysis
 
