@@ -1,23 +1,40 @@
 
 ## Tuples
 
-Tuples are used extensively in F\#.
+```
+let a : int * string = (1, "foo")
+```
 
-Often as a way of returning multiple values at once.
+Used extensively in F\#
 
-Mildly less prevalent since anonymous records.
+???
 
-Tuples in F\# are simply `System.Tuple` instances - and thus reference types.
+Returning multiple values
+Anonymous records
 
-(F\# has struct tuples as well)
+--
 
-But let's have a look at how bad tuples really are for performance.
+&nbsp;
+
+Alias for `System.Tuple` - and thus reference types
+
+(F\# does now also have struct tuples)
+
+--
+
+&nbsp;
+
+How bad really are tuples for performance.
+
+???
+
+Allocation
 
 ---
 
-## Tuples - optimisations
+## Tuples - well-optimisated
 
-They are actually optimised extremely effectively in a variety of scenarios.
+Optimised extremely effectively in a variety of scenarios.
 
 ```fsharp
 let f a b =
@@ -33,13 +50,15 @@ is optimised to:
 let f a b = a + b
 ```
 
-So clearly, a good deal of optmisation is happening around tuples.
+???
+
+Don Syme has put in the effort here
 
 ---
 
 ## Tuples - pattern matching
 
-Pattern matching on 'tuples' is also optimised efficiently.
+Pattern matching on tuples:
 
 ```fsharp
 let f a b =
@@ -51,10 +70,27 @@ let f a b =
     | _ -> -1
 ```
 
-This is tranformed into case statements (or jump tables if `int`).
+???
 
-Interestingly, this results in very different IL from the C# equivalent.
-Yet more interestingly, the F\# IL performs around 10% better!
+extremely common use
+
+--
+
+Becomes case statements (or jump tables if `int`)
+
+No tuple is allocated*
+
+--
+
+&nbsp;
+
+It _is_ possible to have a pattern match on a tuple allocate.
+
+We've seen it in the wild, but I've been unable to reproduce it no matter how complicate I make things!
+
+---
+
+## Tuples - pattern matching (vs C\#)
 
 ```csharp
 int F (int a, int b)
@@ -70,12 +106,15 @@ int F (int a, int b)
 }
 ```
 
-It _is_ possible to have a pattern match on a tuple allocate.
+--
 
-We've seen it in the wild, but I've been unable to reproduce it no matter how complicate I make things!
+Very different IL between the languages.
 
+F\# IL performs around 10% better!
 
-- **show the il differences / benchmark it?**
+???
+
+For floats the situation is reversed!
 
 ---
 
