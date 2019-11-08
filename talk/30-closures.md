@@ -141,13 +141,11 @@ But it isn't. :(
 
 will be made each time you call `g`
 
+So how bad are things...
+
 ---
 
-## Closures
-
-So, how bad are they?
-
---
+## Closures - too cleaver for me
 
 ```fsharp
 let add a b = a + b
@@ -157,30 +155,41 @@ let hof (f : int -> int) : int = f 1
 let go (a : int) : int = hof (add a)
 ```
 
+--
+
 This actually optimises (due to inlining) to:
 
 ```fsharp
 let go a = a + 1
 ```
 
-Which is normally useful, but isn't what I'm trying to show here!
+Which is great!
+
+But isn't what I'm trying to show here...
+
+???
+
+hence the slide title
 
 ---
 
-## Closures - behind the curtain
+## Closures - must try harder
 
 Let's stop any inlining.
 
 ```fsharp
-let sum a b = a + b
+let add a b = a + b
 
 [<MethodImpl(MethodImplOptions.NoInlining)>]
 let hof f = f 1
 
-let go a = hof (sum a)
+// HOT PATH
+let go a = hof (add a)
 ```
 
 Now, how does `go` compile?
+
+--
 
 ```yaml
 go:
@@ -194,9 +203,13 @@ So what is this `go@6` type?
 
 (Named as it is declared inside `go` at line 6)
 
+???
+
+`newobj` = allocation
+
 ---
 
-## Closures - `go@6` home, you're drunk
+## Closuresk
 
 In IL:
 
@@ -217,11 +230,15 @@ IL_0008:  stfld       Bork+go@6.a
 IL_000D:  ret
 ```
 
+???
+
+for those who don't read IL
+
 ---
 
-## Closures - `go@6` go power rangers
+## Closures
 
-In C# (thanks to ILSpy):
+In C# (thanks to ILSpy)...
 
 ```csharp
 [Serializable]
@@ -231,25 +248,35 @@ internal sealed class go@6 : FSharpFunc<int, int>
 
     [CompilerGenerated]
     [DebuggerNonUserCode]
-    internal go@6(int a)
-    {
-        this.a = a;
-    }
+    internal go@6(int a) { this.a = a; }
 
-    public override int Invoke(int b)
-    {
-        return a + b;
-    }
+    public override int Invoke(int b) { return a + b; }
 }
 ```
 
 ---
 
-## Closures - we want to `go@6` faster
+## Closures
+
+It's our good old friendly closure we saw before!
+
+```fsharp
+let go a = hof (add a)
+```
+
+```fsharp
+let go a =
+    let closure = new go@6(a) // <- allocation :(
+    hof closure
+```
+
+---
+
+## Closures - we want to go@6 faster
 
 If you find yourself desperately in need of allocating a closure up-front.
 
-You can allocate at the scope at which all capture variables are known.
+You can allocate at the scope at which all captured variables are known.
 If there are none, then you can allocate statically.
 
 ```fsharp
@@ -258,21 +285,23 @@ let add1 xs = xs |> List.map (fun a -> a + 1)
 
 ---
 
-## Closures - Jason Statham, go-`go@6` dancer
+## Closures - go@6 home you're drunk
 
 ```fsharp
 let mapper a = a + 1
 let add1 xs = xs |> List.map mapper
 ```
 
-Nope!
+---
+
+Nope! This doesn't work.
 
 `mapper` here is a method, not a closure.
 So F\# has to turn this into an object that it can pass around first - i.e. a closure!
 
 ---
 
-## Closures - Round and round we `go@6`
+## Closures - Round and round we go@6
 
 ```fsharp
 let mapper = fun a -> a + 1
@@ -286,7 +315,7 @@ For good or ill F\# has optimised this by converting this to a method for you!
 
 ---
 
-## Closures - Witty title involving `go@6`
+## Closures - Witty title involving go@6
 
 ```fsharp
 let mapper = id <| fun a -> a + 1
