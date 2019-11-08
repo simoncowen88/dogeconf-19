@@ -30,11 +30,9 @@ class: split-50
 
 ### YES
 
-This talk *is* about F\# performance in isolation:
-
-- How to make it perform well.
-- Things to watch our for.
-- How those of writing F\# at GR get the most out the language.
+- F\# performance gotchas.
+- Micro-level concerns.
+- Macro-level techniques.
 ]
 
 .post-columns[
