@@ -80,17 +80,31 @@ let g = new g_impl (a)
 g.Invoke 3
 ```
 
+???
+
+now we know what's going on
+
 ---
 
 ## Closures - closures everywhere
 
-Functional programming leads to passing around a lot of functions due to the
-prevalance of higher-order functions (e.g. List.map, Seq.fold, memoise).
+Functional programming leads to passing around a lot of functions due to the prevalance of higher-order functions
 
-(a higher-order function is anything with a functino as a parameter)
+(e.g. `List.map`, `Seq.fold`, `memoise`).
 
-If these HOFs are being invoked on the hot path you may allocate closure
-for each invocation.
+&nbsp;
+
+(a higher-order function is anything with a function as a parameter or return type)
+
+--
+
+&nbsp;
+
+If HOFs are being invoked on the hot path you may allocate a closure for each invocation.
+
+--
+
+&nbsp;
 
 F\# doesn't have closure detection - so even if your closure doesn't capture anything,
 and thus could be allocataed statically, F\# doesn;t realise this.
