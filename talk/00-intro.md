@@ -24,6 +24,7 @@ class: split-50
 - A flame war.
 - An F\# vs C\# contest.
 - A functional vs OOP deathmatch.
+
 ]
 
 .column[
@@ -33,6 +34,7 @@ class: split-50
 - F\# performance gotchas.
 - Micro-level concerns.
 - Macro-level techniques.
+
 ]
 
 .post-columns[
@@ -44,30 +46,12 @@ Disclaimer: I reserve the right to point out places where we're faster than C\#.
 
 ## Functional performance
 
-Things we'll talk about about:
-
-- Immutability
-  - Parallelisation
-  - Optimisations*
-- Allocation
-  - Closures
-  - Tuples
-  - Struct types
-- Inlining
-- Cheating
-  - Case study: List.map
-- Macro optimisations
-  - Initial algebras
-
-I also want to remind us all that sometimes absolute runtime performance is all that matter.
-But most of the timme, it's just one part of the story.
+Absolute runtime performance isn't always all that matters.
+Most of the time, it's just one part of the story.
 
 Ask yourself, if I offered you a 10× development speedup for a 10% preformance loss,
-would you take it? (12 month project done in under 6 weeks, 10ms perf becomes 11ms).
+would you take it?
 
-???
-
-- F\#'s lack of purity reduces its ability to optimise perfectly here.
-- Aggressive inlining - even across assembly boundaries.
+That's a 12 month project done in under 6 weeks, while 10ms perf becomes 11ms.
 
 ---

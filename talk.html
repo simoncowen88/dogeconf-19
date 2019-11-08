@@ -47,6 +47,11 @@
         padding: 0;
       }
 
+      .remark-slide-content .quote {
+        font-size: 20px;
+        color: #7a5123;
+      }
+
       .remark-notes p {
         margin: 0;
         padding: 0;
@@ -58,32 +63,35 @@
       }
 
       .remark-slide-number {
-          font-size: 0px;
-          background-image: url("images/doge-pup.png");
-          background-size: contain;
-          width: 95px;
-          height: 95px;
+        font-size: 0px;
+        background-image: url("images/doge-pup.png");
+        background-size: contain;
+        width: 95px;
+        height: 95px;
       }
 
+      /* Titles */
       .remark-slide-content h1 {
-          font-size: 50px;
-          line-height:0.5em;
+        font-size: 50px;
+        line-height:0.5em;
       }
 
       .remark-slide-content h2 {
-          font-size: 40px;
-          line-height:0.5em;
+        font-size: 40px;
+        line-height:0.5em;
       }
 
       .remark-slide-content h3 {
-          font-size: 30px;
-          line-height:0.5em;
+        font-size: 30px;
+        line-height:0.5em;
       }
 
+      /* Code */
       .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
 
       .smallcode code { font-size: 15px; }
 
+      /* Images */
       .smallimg img {
         width: 1.5em;
         vertical-align: middle;
@@ -102,6 +110,7 @@
         height: 500px;
       }
 
+      /* Tables */
       table tr:nth-child(odd) td {
         background-color: #EEEEEE
       }
@@ -109,20 +118,14 @@
         background-color: #BBBBBB
       }
 
-      .column:first-of-type {
-        float: left;
-      }
-
-      .column:nth-of-type(2) {
-        float: right;
-      }
+      /* Columns */
+      .column:first-of-type { float: left; }
+      .column:nth-of-type(2) { float: right; }
 
       .split-50 .column:first-of-type { width: 50% }
       .split-50 .column:nth-of-type(2) { width: 50% }
 
-      .post-columns {
-        float: inline-start;
-      }
+      .post-columns { float: inline-start; }
     </style>
   </head>
   <body>
