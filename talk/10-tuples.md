@@ -24,7 +24,7 @@ Alias for `System.Tuple` - and thus reference types
 
 &nbsp;
 
-How bad really are tuples for performance.
+How bad really are tuples for performance?
 
 ???
 
@@ -84,13 +84,17 @@ No tuple is allocated*
 
 &nbsp;
 
-It _is_ possible to have a pattern match on a tuple allocate.
+It _is_ possible to have a pattern matching on a tuple allocate.
 
-We've seen it in the wild, but I've been unable to reproduce it no matter how complicate I make things!
+???
+
+seen in the wild
+unable to reproduce
+even with very complex scenarios (nested dus &c)
 
 ---
 
-## Tuples - pattern matching (vs C\#)
+## Tuples - pattern matching (vs C\#) 🔥🔥🔥
 
 ```csharp
 int F (int a, int b)
