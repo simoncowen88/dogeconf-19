@@ -17,6 +17,8 @@ class: split-50
 
 ## What to expect
 
+--
+
 .column[
 
 ### NO
@@ -26,6 +28,8 @@ class: split-50
 - A functional vs OOP deathmatch.
 
 ]
+
+--
 
 .column[
 
@@ -37,6 +41,8 @@ class: split-50
 
 ]
 
+--
+
 .post-columns[
 &nbsp;
 Disclaimer: I reserve the right to point out places where we're faster than C\#. :)
@@ -44,14 +50,15 @@ Disclaimer: I reserve the right to point out places where we're faster than C\#.
 
 ---
 
-## Functional performance
+class: center, middle
 
-Absolute runtime performance isn't always all that matters.
-Most of the time, it's just one part of the story.
+Most of the time absolute runtime performance isn't all that matters.
+It's just one part of the story.
 
-Ask yourself, if I offered you a 10× development speedup for a 10% preformance loss,
-would you take it?
+???
 
-That's a 12 month project done in under 6 weeks, while 10ms perf becomes 11ms.
+10× dev speedup for a 10% preformance loss
+12 month project done in under 6 weeks
+10ms perf becomes 11ms
 
 ---
