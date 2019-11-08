@@ -13,6 +13,8 @@ Notes for me
 
 ---
 
+class: split-50
+
 ## What to expect
 
 .column[
