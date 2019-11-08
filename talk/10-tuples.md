@@ -5,9 +5,11 @@ Tuples are used extensively in F\#.
 
 Often as a way of returning multiple values at once.
 
-Tuples in F\# are simply `Sysmte.Tuple` instances - and thus reference types.
+Mildly less prevalent since anonymous records.
 
-(F\# now has struct tuples as well)
+Tuples in F\# are simply `System.Tuple` instances - and thus reference types.
+
+(F\# has struct tuples as well)
 
 But let's have a look at how bad tuples really are for performance.
 
@@ -22,6 +24,8 @@ let f a b =
     let tuple = a, b
     fst tuple + snd tuple
 ```
+
+--
 
 is optimised to:
 
@@ -65,6 +69,11 @@ int F (int a, int b)
     }
 }
 ```
+
+It _is_ possible to have a pattern match on a tuple allocate.
+
+We've seen it in the wild, but I've been unable to reproduce it no matter how complicate I make things!
+
 
 - **show the il differences / benchmark it?**
 

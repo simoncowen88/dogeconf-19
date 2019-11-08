@@ -57,6 +57,7 @@ Disclaimer: I reserve the right to point out places where we're faster than C\#.
 class: center, middle
 
 Most of the time absolute runtime performance isn't all that matters.
+
 It's just one part of the story.
 
 ???
