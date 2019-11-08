@@ -15,17 +15,23 @@ Notes for me
 
 ## What to expect
 
+.column[
+
 Things this talk *isn't*:
 
 - A flame war.
 - An F\# vs C\# contest.
 - A functional vs OOP deathmatch.
+]
+
+.column[
 
 This talk *is* about F\# performance in isolation:
 
 - How to make it perform well.
 - Things to watch our for.
 - How those of writing F\# at GR get the most out the language.
+]
 
 Disclaimer: I reserve the right to point out places where we're faster than C\#. :)
 
