@@ -7,7 +7,7 @@ get for free in F#
 
 --
 
-Wikipedia:
+Wikipedia\:
 
 .quote[
 > In computing, inline expansion, or inlining, is a manual or compiler optimization that replaces a function call site with the body of the called function.
