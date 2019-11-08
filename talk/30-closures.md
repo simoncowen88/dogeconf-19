@@ -142,7 +142,7 @@ So how bad are things...
 
 ---
 
-## Closures - too cleaver for me
+## Closures - too clever for me
 
 ```fsharp
 let add a b = a + b
@@ -160,6 +160,8 @@ This actually optimises (due to inlining) to:
 let go a = a + 1
 ```
 
+--
+
 Which is great!
 
 But isn't what I'm trying to show here...
@@ -172,19 +174,16 @@ hence the slide title
 
 ## Closures - must try harder
 
-Let's stop any inlining.
-
 ```fsharp
 let add a b = a + b
-
 [<MethodImpl(MethodImplOptions.NoInlining)>]
 let hof f = f 1
-
-// HOT PATH
 let go a = hof (add a)
 ```
 
-Now, how does `go` compile?
+???
+
+stop any inlining
 
 --
 
@@ -196,6 +195,8 @@ IL_0008:  call        Bork.f<Int32>     # invoke f                     [f ?]
 IL_000D:  ret
 ```
 
+--
+
 So what is this `go@6` type?
 
 (Named as it is declared inside `go` at line 6)
@@ -206,7 +207,7 @@ So what is this `go@6` type?
 
 ---
 
-## Closuresk
+## Closures
 
 In IL:
 
