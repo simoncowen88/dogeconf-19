@@ -140,9 +140,18 @@ F\# has a syntax sugar to make this present as
 Dictionary<'key, 'value>.TryGetValue : 'key -> bool * 'value
 ```
 
+--
+
+i.e.
+
+```fsharp
+let b, v = dict.TryGetValue "foo"
+```
+
 ???
 
-`out` parameters are inherantly mutation-focused
+`out` parameters are inherently mutation-focused
+
 Would be very non-idiomatic in F\#
 
 ---
@@ -154,25 +163,29 @@ No tuple is allocated in either of these cases:
 --
 
 ```fsharp
-let go () =
-    let b, v = dict.TryGetValue 1
+let go (dict : Dictionary<string, int>) : int =
+    let b, v = dict.TryGetValue "foo"
     if b then v else -1
 ```
 
 ```fsharp
-let go () =
-    match dict.TryGetValue 1 with
+let go (dict : Dictionary<string, int>) : int =
+    match dict.TryGetValue "foo" with
     | true, v -> v
     | _ -> -1
 ```
 
 ???
 
+`v` is secretly a local variable
+
 Returning the tuple &c will force the allocation
 
 ---
 
 ## Tuples - DU fields
+
+--
 
 (Spoiler: they're not really tuples at all)
 
@@ -187,12 +200,22 @@ This defines a type with two fields.
 --
 
 ```fsharp
+type Foo = Foo of alice: int * bob: int
+```
+
+More clear when you name them.
+
+--
+
+```fsharp
 let foo = Foo (1,2)
 ```
 
 No tuples were allocated in the making of this `Foo`.
 
---
+---
+
+## Tuples - DU fields
 
 If you really wanted to be allocating tuples:
 
@@ -201,6 +224,10 @@ type Foo = Foo of (int * int)
 ```
 
 This defines a type with a single field - that field is a tuple.
+
+???
+
+Very unusual!
 
 ---
 
