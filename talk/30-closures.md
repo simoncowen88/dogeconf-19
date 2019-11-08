@@ -107,20 +107,54 @@ If HOFs are being invoked on the hot path you may allocate a closure for each in
 &nbsp;
 
 F\# doesn't have closure detection - so even if your closure doesn't capture anything,
-and thus could be allocataed statically, F\# doesn;t realise this.
+it won't be allocated statically.
 
 ---
 
-## Closures - too clever for me
+## Closures - closure detection
 
 ```fsharp
-let sum a b = a + b
+let go () =
+  let f a = a + 1
+  /// ...
+```
 
-// HOF
-let hof f = f 1
+Which is really...
+
+```fsharp
+let go () =
+  let f = f_impl ()
+  /// ...
+```
+
+_Could_ be transformed safely to:
+
+```fsharp
+let f = f_impl ()
+let go () =
+  /// ...
+```
+
+But it isn't. :(
+
+???
+
+will be made each time you call `g`
+
+---
+
+## Closures
+
+So, how bad are they?
+
+--
+
+```fsharp
+let add a b = a + b
+let hof (f : int -> int) : int = f 1
 
 // HOT PATH
-let go a = hof (sum a)
+let go (a : int) : int = hof (add a)
 ```
 
 This actually optimises (due to inlining) to:
