@@ -116,7 +116,6 @@ it won't be allocated statically.
 ```fsharp
 let go () =
   let f a = a + 1
-  /// ...
 ```
 
 Which is really...
@@ -124,7 +123,6 @@ Which is really...
 ```fsharp
 let go () =
   let f = f_impl ()
-  /// ...
 ```
 
 _Could_ be transformed safely to:
@@ -132,7 +130,6 @@ _Could_ be transformed safely to:
 ```fsharp
 let f = f_impl ()
 let go () =
-  /// ...
 ```
 
 But it isn't. :(
@@ -308,7 +305,12 @@ Wrong! This doesn't work.
 &nbsp;
 
 `mapper` here is a method, not a closure.
+
 So F\# has to turn this into an object that it can pass around first - i.e. a closure!
+
+???
+
+it captures nothing - but f# can't detect that
 
 ---
 
@@ -318,6 +320,8 @@ So F\# has to turn this into an object that it can pass around first - i.e. a cl
 let mapper = fun a -> a + 1
 let add1 xs = xs |> List.map mapper
 ```
+
+--
 
 Still no!
 
