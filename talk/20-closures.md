@@ -6,7 +6,11 @@ Wikipedia says...
 .quote[
 > ... a technique for implementing lexically scoped name binding in a language with first-class functions
 >
+> &nbsp;
+>
 > Operationally, a closure is a record storing a function together with an environment.
+>
+> &nbsp;
 >
 > The environment is a mapping associating each free variable of the function (variables that are used locally, but defined in an enclosing scope) with the value or reference to which the name was bound when the closure was created. Unlike a plain function, a closure allows the function to access those captured variables through the closure's copies of their values or references, even when the function is invoked outside their scope.
 ]
@@ -16,14 +20,28 @@ Wikipedia says...
 ## Closures - behind the curtain
 
 ```fsharp
-let a = 1
-let f b = a + b
-
-f 3
+let f a b = a + b
+let g = f 1
+g 3
 ```
 
 What's actually going on here?
-What *is* `f`?
+
+--
+
+&nbsp;
+
+What *is* `g`?
+
+--
+
+&nbsp;
+
+How does it have access to `a`?
+
+???
+
+No `this` parameter like in C#
 
 ---
 
@@ -31,27 +49,35 @@ What *is* `f`?
 
 
 ```fsharp
-let a = 1
-let f b = a + b
+let f a b = a + b
+let g = f 1
+g 3
 ```
 
 is really...
 
+```fsharp
+type g_impl (a : int) =
+    inherit FSharpFunc<int, int>
+    override __.Invoke (b : int) = a + b
+```
+
+--
+
 ```csharp
-internal sealed class f_impl : FSharpFunc<int, int>
-{
+internal sealed class g_impl : FSharpFunc<int, int> {
     private int a;
-
-    internal go@28(int a)
-    {
-        this.a = a;
-    }
-
-    public override int Invoke(int b)
-    {
-        return a + b;
-    }
+    internal g_impl(int a) { this.a = a; }
+    public override int Invoke(int b) { return a + b; }
 }
+```
+
+--
+
+```fsharp
+let f a b = a + b
+let g = new g_impl (a)
+g.Invoke 3
 ```
 
 ---
