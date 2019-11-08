@@ -277,24 +277,35 @@ let go a =
 If you find yourself desperately in need of allocating a closure up-front.
 
 You can allocate at the scope at which all captured variables are known.
-If there are none, then you can allocate statically.
 
-```fsharp
-let add1 xs = xs |> List.map (fun a -> a + 1)
-```
+If there are none, then you can allocate statically.
 
 ---
 
 ## Closures - go@6 home you're drunk
 
 ```fsharp
+let add1 xs = xs |> List.map (fun a -> a + 1)
+```
+
+becomes...
+
+```fsharp
 let mapper a = a + 1
 let add1 xs = xs |> List.map mapper
 ```
 
----
+--
 
-Nope! This doesn't work.
+Sweet. That was easy.
+
+--
+
+Wrong! This doesn't work.
+
+--
+
+&nbsp;
 
 `mapper` here is a method, not a closure.
 So F\# has to turn this into an object that it can pass around first - i.e. a closure!
