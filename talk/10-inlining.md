@@ -1,8 +1,12 @@
 
 ## Inlining
 
+--
+
 Wikipedia:
 > In computing, inline expansion, or inlining, is a manual or compiler optimization that replaces a function call site with the body of the called function.
+
+--
 
 - No function call.
 - No need to pass arguments. (reduces register use)
