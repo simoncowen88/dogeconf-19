@@ -118,7 +118,9 @@ For floats the situation is reversed!
 
 ---
 
-## Tuples - synthetic tuples for `out` parameters
+## Tuples - 'synthetic' tuples
+
+--
 
 For methods such as:
 
@@ -126,13 +128,26 @@ For methods such as:
 bool Dictionary<TKey, TValue>.TryGetValue(TKey ket, out TValue value);
 ```
 
+--
+
 F\# has a syntax sugar to make this present as
 
 ```fsharp
 Dictionary<'key, 'value>.TryGetValue : 'key -> bool * 'value
 ```
 
-However, don'r be fooled. No tuple is allocated in either of these cases:
+???
+
+`out` parameters are inherantly mutation-focused
+Would be very non-idiomatic in F\#
+
+---
+
+## Tuples - 'synthetic' tuples
+
+No tuple is allocated in either of these cases:
+
+--
 
 ```fsharp
 let go () =
@@ -149,19 +164,23 @@ let go () =
 
 ???
 
-As `out` parameters are inherantly mutation-focused.
+Returning the tuple &c will force the allocation
 
 ---
 
 ## Tuples - DU fields
 
-- Also, tuples on DUs are not really tuples
+(Spoiler: they're not really tuples at all)
+
+--
 
 ```fsharp
-[<Struct>] type Foo = Foo of int * int
+type Foo = Foo of int * int
 ```
 
 This defines a type with two fields.
+
+--
 
 ```fsharp
 let foo = Foo (1,2)
@@ -169,10 +188,12 @@ let foo = Foo (1,2)
 
 No tuples were allocated in the making of this `Foo`.
 
-If you really wanted to be allocating tuples, then you need this:
+--
+
+If you really wanted to be allocating tuples:
 
 ```fsharp
-[<Struct>] type Foo = Foo of (int * int)
+type Foo = Foo of (int * int)
 ```
 
 This defines a type with a single field - that field is a tuple.
