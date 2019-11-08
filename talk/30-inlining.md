@@ -38,6 +38,8 @@ let f a = 2 * a
 let g a = f (a + 1)
 ```
 
+&nbsp;
+
 What does the compiled code for `g` actually look like?
 
 ---
