@@ -1,5 +1,10 @@
 class: center, middle
 
+[doge]: images/doge.png
+[red-cross]: images/red-cross.png
+
+.w100img[![](images/dogeconf.png)]
+
 # Writing performant code in F# #
 
 ???
