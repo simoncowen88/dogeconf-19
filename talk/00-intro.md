@@ -36,7 +36,7 @@ class: split-50
 ]
 
 .post-columns[
-&nsbp;
+&nbsp;
 Disclaimer: I reserve the right to point out places where we're faster than C\#. :)
 ]
 
