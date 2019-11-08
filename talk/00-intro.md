@@ -44,7 +44,11 @@ class: split-50
 --
 
 .post-columns[
+
 &nbsp;
+
+&nbsp;
+
 Disclaimer: I reserve the right to point out places where we're faster than C\#. :)
 ]
 
