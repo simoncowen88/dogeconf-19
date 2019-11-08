@@ -19,7 +19,7 @@ class: split-50
 
 .column[
 
-Things this talk *isn't*:
+### NO
 
 - A flame war.
 - An F\# vs C\# contest.
@@ -27,6 +27,8 @@ Things this talk *isn't*:
 ]
 
 .column[
+
+### YES
 
 This talk *is* about F\# performance in isolation:
 
