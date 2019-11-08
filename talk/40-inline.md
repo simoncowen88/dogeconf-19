@@ -1,5 +1,11 @@
 
-### `inline` keyword
+## inline keyword
+
+Functions marked `inline` are integrated directly into the calling code.
+
+&nbsp;
+
+--
 
 From StackOverflow...
 
@@ -13,15 +19,13 @@ inlined in order to produce a singly fully-optimized piece of code.
 > Note that this bears little resemblance to what inline does in most other languages.
 You can achieve a similar effect using template metaprogramming in C++ but F# can
 also inline between compiled assemblies because inline is conveyed via .NET metadata.
->
-> &nbsp;
->
-> For example, the inline in the following fold function makes it 5× faster:
 ]
 
 ---
 
-### `inline` keyword
+## inline keyword
+
+Let's take a function that folds over an array...
 
 ```fsharp
 let inline fold (f : 'acc -> 'a -> 'acc) (initial : 'acc) (xs : 'a array) : 'acc =
@@ -32,53 +36,96 @@ let inline fold (f : 'acc -> 'a -> 'acc) (initial : 'acc) (xs : 'a array) : 'acc
     acc
 ```
 
-A wonderfully inefficient way to sum the first n integers.
+???
 
-```fsharp
-let xs = Array.init 1000 id
-let go () = xs |> fold (fun a b -> a + b) 0
-```
-
-(perf: ~650 nanoseconds)
-
-But ah-ha you think. This will allocate a closure!
-
-So we do all of the previous faff to avoid this. But was it worth it?
-
-No! It performs worse.
-
-(perf: ~5000 nanoseconds)
+safe island of mutability
 
 ---
 
-### inline all the things
+## inline keyword
+
+We can write ourselves a wonderfully inefficient way to sum the first n integers.
 
 ```fsharp
-fold (fun a b -> a + b) 0 xs
+let xs = Array.init 1000 id
+let go () = fold (fun a b -> a + b) 0 xs
 ```
 
-If fold is marked inline, then this (imho incredibly!) optimises to:
+--
+
+Perf: ~650 nanoseconds
+
+--
+
+But ah-ha you think. This will allocate a closure!
+
+So we do all of the previous faff to avoid this.
+
+--
+
+&nbsp;
+
+Perf: ~5000 nanoseconds
+
+???
+
+what went wrong?
+
+---
+
+## inline all the things
 
 ```fsharp
-let mutable acc = 1
-for i in 0..xs.Length-1 do
-    acc <- acc + xs.[i]
-acc
+let go () =
+    fold (fun a b -> a + b) 0 xs
 ```
 
-Rather than a function call for each element of the array, we simply have the operation inlined.
+--
+
+But `fold` is marked inline, so we just blat the body in, replacing args...
+
+---
+
+## inline all the things
+
+```fsharp
+let go () =
+    let mutable acc = 0
+    let len = xs.Length-1
+    for i in 0..len do
+        acc <- (fun a b -> a + b) acc xs.[i]
+    acc
+```
+
+???
+
+initial = 0
+f = (fun a b -> a+b)
+
+--
+
+But now F\# can perform further optimisations!
+
+Here, that means inlining `(fun a b -> a + b)`
+
+---
+
+## inline all the things
+
+```fsharp
+let go () =
+  let mutable acc = 1
+  let len = xs.Length-1
+  for i in 0..len do
+      acc <- acc + xs.[i]
+  acc
+```
+
+--
+
 So no closure was allocated anyway!
 
-In fact, our allocating of the closure up-front would have blocked the full inlining.
-We would have ended up with:
-
-```fsharp
-let mutable acc = 1
-for i in 0..xs.Length-1 do
-    acc <- folder acc xs.[i]
-acc
-```
-
-Which performs somewhere in the middle.
+In fact, our allocating of the closure up-front  blocked the full inlining.
+And given how cheap everything was, the extra perf was simply from all of the function calls.
 
 ---
