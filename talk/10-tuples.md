@@ -199,3 +199,19 @@ type Foo = Foo of (int * int)
 This defines a type with a single field - that field is a tuple.
 
 ---
+
+## Tuples - summary
+
+Heavily optimised in a huge number of scenarios.
+
+Obviously putting them into a list &c will allocate them.
+
+&nbsp;
+
+As always with perf, it's not obvious.
+
+Benchmark, benchmark, benchmark.
+
+???
+
+I was surprise by many things here!
