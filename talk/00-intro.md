@@ -37,7 +37,10 @@ This talk *is* about F\# performance in isolation:
 - How those of writing F\# at GR get the most out the language.
 ]
 
+.post-columns[
+
 Disclaimer: I reserve the right to point out places where we're faster than C\#. :)
+]
 
 ---
 
