@@ -1,37 +1,190 @@
-// Cover HOFs
-// let f a b = a + b === let f a = fun b -> a + b
+class: center, middle
 
-// A float -> float function for the hot path
-// Parameterised by runtime values
-// We can accept slow start-up, but not slow hot-path
+# How we make things go fast #
 
-module Imperative =
+---
 
-    // no place to do slow up-front work
-    let make a b c d (x : float) =
+## Recap
+
+### Higher-order functions
+
+```fsharp
+let f a b = a + b
+```
+
+is equivalent to
+
+```fsharp
+let f a = fun b -> a + b
+```
+
+---
+
+## A simple goal
+
+&nbsp;
+
+Write a declarative algebra that can outperform `float -> float` functions.
+
+&nbsp;
+
+--
+
+Algebra : set of types of methods acting on them
+
+Declarative : not an implementation, simply a description
+
+---
+
+## The idea
+
+In Tyburn, and many other scenarios, we have two distinct phases
+
+&nbsp;
+
+--
+
+### Startup
+
+No particular performance requirements
+
+Load data to construct things to run on...
+
+--
+
+### "Hot path"
+
+Performance is key
+
+No allocation allowed
+
+??
+
+think signals
+
+---
+
+## The model
+
+A float -> float function for the hot path
+
+&nbsp;
+
+--
+
+Parameterised by runtime values at startup
+
+&nbsp;
+
+--
+
+We can accept slow start-up, but not slow hot-path
+
+---
+
+## Don't think, just do
+
+```fsharp
+let make a b c d (x : float) =
+    (c - d) * (a + b + x) * (a + b + x)
+```
+
+A `float -> float` function, parameterised by 4 `float`s
+
+--
+
+There's no place to do slow up-front work
+
+---
+
+## Think a little bit
+
+```fsharp
+let make a b c d : float -> float =
+    // do all the work you like here
+    fun x ->
+        // be as fast as possible here
         (c - d) * (a + b + x) * (a + b + x)
+```
 
-    let make1' a b c d =
-        // do all the work you like here
-        fun (x : float) ->
-            // be as fast as possible here
-            (c - d) * (a + b + x) * (a + b + x)
+--
 
-    // You can now hand-optimise! (If you hate yourself)
-    // What if the code changes?
-    // Did you cover all the optimisations?
-    // Were your refactorings correct?
-    // Can you still understand the logic?
-    let make1'' a b c d =
-        let c1 = c - d
-        let c2 = a + b
-        fun (x : float) ->
-            c1 * (c2 + x) * (c2 + x)
+We've now given ourselves a place to do work at startup.
 
-// A better way...
+???
 
-// A declarative approach
+let's use it!
 
+---
+
+## Think a lot bit
+
+```fsharp
+let make a b c d : float -> float =
+    let p1 = c - d
+    let p2 = a + b
+    fun x -> p1 * (p2 + x) * (p2 + x)
+```
+
+Do some hand-optimising!
+--
+ (because you hate yourself)
+
+&nbsp;
+
+--
+
+What if the code changes?
+
+--
+
+Did you cover all the optimisations?
+
+--
+
+Were your refactorings correct?
+
+--
+
+Can you still understand the logic?
+
+--
+
+How far do you go?
+
+---
+
+## Expanding brain meme
+
+```fsharp
+let make a b c d : float -> float =
+    let p1 = c - d
+    let p2 = a + b
+    if p1 = 0.0 then
+        fun x -> 0.0
+    elif p2 = 0.0 then
+        fun x -> p1 * x * x
+    else
+        fun x -> p1 * (p2 + x) * (p2 + x)
+```
+
+--
+
+Just stop
+
+--
+
+It's not wrong
+
+--
+
+But it is the wrong approach
+
+---
+
+## A better way
+
+```fsharp
 type Expr =
     | Add of Expr * Expr
     | Sub of Expr * Expr
@@ -39,254 +192,454 @@ type Expr =
     | Div of Expr * Expr
     | Const of float
     | Var
+```
 
-// open this to get the operators in scope
-module Ops =
-    let (+) a b = Add (a, b)
-    let (-) a b = Sub (a, b)
-    let (*) a b = Mul (a, b)
-    let (/) a b = Div (a, b)
+???
 
-module Decalarative =
-    open Ops
+Var = input variable
 
-    let make a b c d =
-        // we need to lift the floats to constants in our algebra
-        let a = Const a
-        let b = Const b
-        let c = Const c
-        let d = Const d
-        let x = Var
-        (c - d) * (a + b + x) * (a + b + x)
+--
 
-module Functions =
-    open Ops
+Algebra : set of types of methods acting on them
 
-    let private x = Var
+Declarative : not an implementation, simply a description
 
-    let f = Imperative.make 1.2 3.2 4.5 4.5
-    let g = Decalarative.make 1.2 3.2 4.5 4.5
+---
 
-    let add1 = x + (Const 1.0)
+## A better way
 
-    let times2 = x * (Const 2.0)
+```fsharp
+let make a b c d : float -> float =
+    fun x -> (c - d) * (a + b + x) * (a + b + x)
+```
 
-    let div3 = x / (Const 3.0)
+becomes...
 
+--
 
-(*
-f is inscrutable
-You are relying on the compiler's optimisations
-But they only happen at JIT - it doesn't know about the two phases
+```fsharp
+let make a b c d : Expr =
+  Mul (
+    Mul (
+      Sub (Const c, Const d),
+      Add ((Add (Const a, Const b)), Var)
+    ),
+    Add ((Add (Const a, Const b)), Var)
+  )
+```
 
-g is useless!
+---
+
+## A better way
+
+```fsharp
+let (+) a b = Add (a, b)
+let (-) a b = Sub (a, b)
+let (*) a b = Mul (a, b)
+let (/) a b = Div (a, b)
+```
+
+Define some operators
+
+--
+
+```fsharp
+let add1 : Expr = Var + (Const 1.0) // fun x -> x + 1.0
+
+let times2 : Expr = Var * (Const 2.0) // fun x -> x * 2.0
+
+let div3 : Expr = Var / (Const 3.0) // fun x -> x / 3.0
+```
+
+---
+
+## A better way
+
+```fsharp
+let make a b c d : float -> float =
+    fun x -> (c - d) * (a + b + x) * (a + b + x)
+```
+
+becomes...
+
+--
+
+```fsharp
+let make a b c d : Expr =
+    let a = Const a
+    let b = Const b
+    let c = Const c
+    let d = Const d
+    let x = Var
+    (c - d) * (a + b + x) * (a + b + x)
+```
+
+---
+
+## What have we achieved?
+
+Not much. Yet.
+
+--
+
+&nbsp;
+
+The original function was opaque
+
+We relied compiler's optimisations, but they only happen at JIT
+
+It can't leverage the 2 phases
+
+--
+
+&nbsp;
+
+The new expression is inspectable
+
 It's just a description of what we want to do
-You can't actually evaluate it yet
-*)
 
-// Benchmark the imperative version
+What are we going to do with it?
 
-#time
-for _ in 0..100_000_000 do
-    ignore <| Functions.f 12.3
-#time
+---
 
+## Inspectability
 
-// How to evaluate an expression?
-// Let's be completely naive
+```fsharp
+let rec print expr =
+    match expr with
+    | Add (a, b) -> sprintf "(%s + %s)" (impl a) (impl b)
+    | Sub (a, b) -> sprintf "(%s - %s)" (impl a) (impl b)
+    | Mul (a, b) -> sprintf "(%s * %s)" (impl a) (impl b)
+    | Div (a, b) -> sprintf "(%s / %s)" (impl a) (impl b)
+    | Const a    -> sprintf "%.1f" a
+    | Var        -> "x"
+```
 
-module Interpret =
+A simple evaluator for our algebra
 
-    let rec eval expr x =
-        match expr with
-        | Add (a, b) -> (eval a x) + (eval b x)
-        | Sub (a, b) -> (eval a x) - (eval b x)
-        | Mul (a, b) -> (eval a x) * (eval b x)
-        | Div (a, b) -> (eval a x) / (eval b x)
-        | Const a -> a
-        | Var -> x
+```
+make 1.2 2.3 3.4 4.5 |> print
+val it : string = "(((3.4 - 4.5) * ((1.2 + 2.3) + x)) * ((1.2 + 2.3) + x))"
+```
 
-// ~12 times slower
+---
 
-#time
-for _ in 0..100_000_000 do
-    ignore <| Interpret.eval Functions.g 12.3
-#time
+## Performance
 
-// Can we be smarter about this?
+It turns out that `float -> float` functions are fast
 
-// We said there were two phases, so let's take advantage of that
+Who knew?
 
-module Compile =
+--
 
-    let rec impl expr =
-        match expr with
-        | Add (a, b) ->
-            // can be slow here
-            let a = impl a
-            let b = impl b
-            fun x ->
-                // must be fast here
-                a x + b x
-        | Sub (a, b) ->
-            let a = impl a
-            let b = impl b
-            fun x -> a x - b x
-        | Mul (a, b) ->
-            let a = impl a
-            let b = impl b
-            fun x -> a x * b x
-        | Div (a, b) ->
-            let a = impl a
-            let b = impl b
-            fun x -> a x / b x
-        | Const a ->
-            fun _ -> a
-        | Var -> fun x -> x
+```fsharp
+let make a b c d : float -> float =
+    fun x -> (c - d) * (a + b + x) * (a + b + x)
+```
 
-(*
+100,000,000 invocations takes ~300ms
 
-fun x -> (a + b) * x
-===
-fun x ->
-    (fun x ->
-        (fun _ -> a) x
-        +
-        (fun _ -> b) x
-    ) x
-    *
-    (fun x -> x) x
-===
-let getA x = a
-let getB x = b
-let getAB x = getA x + getB x
-let getX x = x
-fun x -> getAB x + getX x
+--
 
-Not perfect, lots of calls
+&nbsp;
+
+This will be our baseline
+
+---
+
+## Evaluation
+
+```fsharp
+let rec eval (expr : Expr) (x : float) : float =
+    match expr with
+    | Add (a, b) -> (eval a x) + (eval b x)
+    | Sub (a, b) -> (eval a x) - (eval b x)
+    | Mul (a, b) -> (eval a x) * (eval b x)
+    | Div (a, b) -> (eval a x) / (eval b x)
+    | Const a -> a
+    | Var -> x
+```
+
+Completely naive
+
+--
+
+&nbsp;
+
 How does it fare?
-*)
 
-// phase 1: compile
-// we don't care how long this takes (within reason)
-let compiled = Compile.impl Functions.g
+--
 
-// phase 2: execute
-// this needs to be fast
+**~12 times slower**
 
-// ~6 times slower
+---
 
-#time
-for _ in 0..100_000_000 do
-    ignore <| compiled 12.3
-#time
+## Being smarter
 
-// Let's park that for a moment, since it's not obvious how to implement something better
-// (hint: we'll see later how to do exactly that)
+--
 
-// How else could we make this faster - knowing about the two phases?
-// Well, we could do some optimisations that the JIT couldn't.
+We've not made use of the 2 phases
 
-// e.g. constant folding (like we tried to do manually above)
+Let's take advantage of that
 
-module ConstantFold1 =
+--
 
-    let rec go (expr : Expr) : Expr =
-        match expr with
-        | Add (a, b) ->
-            let a = go a
-            let b = go b
-            match a, b with
-            | Const a, Const b -> Const (a + b)
-            | a, b -> Add (a, b)
-        | Sub (a, b) ->
-            let a = go a
-            let b = go b
-            match a, b with
-            | Const a, Const b -> Const (a - b)
-            | a, b -> Sub (a, b)
-        | Mul (a, b) ->
-            let a = go a
-            let b = go b
-            match a, b with
-            | Const a, Const b -> Const (a * b)
-            | a, b -> Mul (a, b)
-        | Div (a, b) ->
-            let a = go a
-            let b = go b
-            match a, b with
-            | Const a, Const b -> Const (a / b)
-            | a, b -> Div (a, b)
-        | Const a -> Const a
-        | Var -> Var
+```fsharp
+let rec impl (expr : Expr) : float -> float =
+    match expr with
+    | Add (a, b) ->
+        let a = impl a
+        let b = impl b
+        fun x -> a x + b x
+    | Sub (a, b) -> ...
+    | Mul (a, b) -> ...
+    | Div (a, b) -> ...
+    | Const a ->
+        fun _ -> a
+    | Var -> fun x -> x
+```
 
-// Two questions arise:
-// 1. Is this the transformation we wanted?
-// 2. Is this a valid transformation?
+---
 
-// This look a lot like our compile function.
-// Most of the logic is just in recursing.
-// Boilerplate sucks. Potential for introducing bugs.
-// We should probably make these tail recursive to avoid stack overflows.
-// How boring.
+## Being smarter
 
-// What if we could commonise all of this recursion?
-// And do it right once and for all.
+--
 
-module Recursion =
+```fsharp
+// phase 1 - startup
+let description : Expr = make 1.2 2.3 3.4 4.5
+let implementation : float -> float = impl description
 
-    let rec go1 (expr : Expr) : 'a =
-        match expr with
-        | Add (a, b) ->
-            failwith "What now?"
-        | _ -> failwith ""
+// phase 2 - hot path
+for _ in 1..100_000_000 do
+    ignore <| implementation 98.7
+```
 
-    let rec go2 (expr : Expr) : 'a =
-        match expr with
-        | Add (a, b) ->
-            // recurse for both
-            let a' = go2 a
-            let b' = go2 b
-            failwith "What now?"
-        | _ -> failwith ""
+--
 
-    let rec go3
-        (add : 'a -> 'a -> 'a)
-        (expr : Expr)
-        : 'a
-        =
-        match expr with
-        | Add (a, b) ->
-            // recurse for both
-            // take a new input for what to do
-            // pass inputs along
-            let a' = go3 add a
-            let b' = go3 add b
-            add a' b'
-        | _ -> failwith ""
+Not perfect
 
-    let rec go4
-        (add : 'a -> 'a -> 'a)
-        (sub : 'a -> 'a -> 'a)
-        (expr : Expr)
-        : 'a
-        =
-        let recurse = go4 add sub
-        match expr with
-        | Add (a, b) -> add (recurse a) (recurse b)
-        | Sub (a, b) -> sub (recurse a) (recurse b)
-        // ...
-        | _ -> failwith ""
+Each operation is a method call
 
-    // add, sub, mul, div are all : 'a -> 'a -> 'a
-    // const : float -> 'a
-    // var : 'a
+--
 
-// This is called a catamorphism. Or Cata for short.
-// Rather than passing in the functions, we make a type for them.
-// Just more sane that passing loads of args
-// Written as an interface, but here could use a record of functions
+&nbsp;
 
+How does it fare?
+
+--
+
+**~6 times slower**
+
+---
+
+## What next?
+
+Not immediately obvious how to make our implementation faster
+
+--
+
+&nbsp;
+
+How else could we make this faster then?
+
+--
+
+Similar optimisations to those we hand-crafted
+
+--
+
+```fsharp
+let make a b c d : float -> float =
+    let p1 = c - d
+    let p2 = a + b
+    if p1 = 0.0 then
+        fun x -> 0.0
+    elif p2 = 0.0 then
+        fun x -> p1 * x * x
+    else
+        fun x -> p1 * (p2 + x) * (p2 + x)
+```
+
+???
+
+'constant'-folding
+
+mult 0, mult 1, add 0 &c
+
+---
+
+## Constant folding
+
+```fsharp
+let rec foldConstants (expr : Expr) : Expr =
+    match expr with
+    | Add (a, b) ->
+        let a = foldConstants a
+        let b = foldConstants b
+        match a, b with
+        | Const a, Const b -> Const (a + b)
+        | a, b -> Add (a, b)
+    | Sub (a, b) ->
+        let a = foldConstants a
+        let b = foldConstants b
+        match a, b with
+        | Const a, Const b -> Const (a - b)
+        | a, b -> Sub (a, b)
+    | Mul (a, b) ->
+        let a = foldConstants a
+        let b = foldConstants b
+        match a, b with
+        | Const a, Const b -> Const (a * b)
+        | a, b -> Mul (a, b)
+    | Div (a, b) ->
+        let a = foldConstants a
+        let b = foldConstants b
+        match a, b with
+        | Const a, Const b -> Const (a / b)
+        | a, b -> Div (a, b)
+    | Const a -> Const a
+    | Var -> Var
+```
+
+---
+
+## Implementation
+
+```fsharp
+let rec implement (expr : Expr) : float -> float =
+    match expr with
+    | Add (a, b) ->
+        let a = implement a
+        let b = implement b
+        fun x -> a x + b x
+    | Sub (a, b) ->
+        let a = implement a
+        let b = implement b
+        fun x -> a x - b x
+    | Mul (a, b) ->
+        let a = implement a
+        let b = implement b
+        fun x -> a x * b x
+    | Div (a, b) ->
+        let a = implement a
+        let b = implement b
+        fun x -> a x / b x
+    | Const a ->
+        fun _ -> a
+    | Var -> fun x -> x
+```
+
+---
+
+## Recursion
+
+There's a lot of boilerplate here
+
+--
+
+&nbsp;
+
+Much of the logic is just in recursing
+
+--
+
+&nbsp;
+
+What if we could commonise all of this recursion?
+
+Doing it right once and for all
+
+???
+
+boilerplate leads to bugs
+
+should make tail recusive
+
+---
+
+## Recursion
+
+```fsharp
+let rec go
+    (expr : Expr)
+    : 'a =
+    match expr with
+    | Add (a, b) ->
+        failwith "What now?"
+    | _ -> failwith ""
+```
+
+---
+
+## Recursion
+
+```fsharp
+let rec go
+    (expr : Expr)
+    : 'a =
+    match expr with
+    | Add (a, b) ->
+        let a' : 'a = go a
+        let b' : 'a = go b
+        failwith "What now?"
+    | _ -> failwith ""
+```
+
+???
+
+recurse for both
+
+---
+
+## Recursion
+
+```fsharp
+let rec go
+    (add : 'a -> 'a -> 'a)
+    (expr : Expr)
+    : 'a =
+    match expr with
+    | Add (a, b) ->
+        let a' : 'a = go add a
+        let b' : 'a = go add b
+        add a' b'
+    | _ -> failwith ""
+```
+
+???
+
+a new input for what to do
+
+---
+
+## Recursion
+
+```fsharp
+let rec go
+    (add : 'a -> 'a -> 'a)
+    (sub : 'a -> 'a -> 'a)
+    (mul : 'a -> 'a -> 'a)
+    (div : 'a -> 'a -> 'a)
+    (const : float -> 'a)
+    (var : 'a)
+    (expr : Expr)
+    : 'a =
+    let recurse = go add sub mul div const var
+    match expr with
+    | Add (a, b) -> add (recurse a) (recurse b)
+    | Sub (a, b) -> sub (recurse a) (recurse b)
+    | Mul (a, b) -> mul (recurse a) (recurse b)
+    | Div (a, b) -> div (recurse a) (recurse b)
+    | Const v -> const v
+    | Var -> var
+```
+
+---
+
+## Recursion
+
+```fsharp
 type Cata<'a> =
     abstract Add : 'a -> 'a -> 'a
     abstract Sub : 'a -> 'a -> 'a
@@ -294,11 +647,18 @@ type Cata<'a> =
     abstract Div : 'a -> 'a -> 'a
     abstract Const : float -> 'a
     abstract Var : 'a
+```
 
+All those arguments are a bit unwieldy
+
+Define a type to hold the transformations
+
+---
+
+## Recursion
+
+```fsharp
 let rec cata (c : Cata<'a>) (expr : Expr) : 'a =
-    // factored out recursion to here
-    // can work hard to e.g. make tail recursive &c
-    // and all uses share that work!
     match expr with
     | Add (a, b) -> c.Add (cata c a) (cata c b)
     | Sub (a, b) -> c.Sub (cata c a) (cata c b)
@@ -306,79 +666,139 @@ let rec cata (c : Cata<'a>) (expr : Expr) : 'a =
     | Div (a, b) -> c.Div (cata c a) (cata c b)
     | Const a -> c.Const a
     | Var -> c.Var
+```
+
+This is called a catamorphism
+
+Or a *cata* for short
+
+???
+
+work hard to ensure tail recursive &c
+
+---
+
+## Implement - revisited
+
+Original
+
+```fsharp
+let rec implement (expr : Expr) : float -> float =
+    match expr with
+    | Add (a, b) ->
+        let a = implement a
+        let b = implement b
+        fun x -> a x + b x
+    | Sub (a, b) ->
+        let a = implement a
+        let b = implement b
+        fun x -> a x - b x
+    | Mul (a, b) ->
+        let a = implement a
+        let b = implement b
+        fun x -> a x * b x
+    | Div (a, b) ->
+        let a = implement a
+        let b = implement b
+        fun x -> a x / b x
+    | Const a ->
+        fun _ -> a
+    | Var -> fun x -> x
+```
+
+---
+
+## Implement - revisited
+
+With catamorphism
+
+```fsharp
+let implCata =
+    { new Cata<float -> float> with
+        member __.Add a b = fun x -> a x + b x
+        member __.Sub a b = fun x -> a x - b x
+        member __.Mul a b = fun x -> a x * b x
+        member __.Div a b = fun x -> a x / b x
+        member __.Const a = fun x -> a
+        member __.Var     = fun x -> x
+    }
+
+let impl expr = cata implCata expr
+```
+
+---
+
+## Constant folding - revisited
+
+Original
+
+```fsharp
+let rec foldConstants (expr : Expr) : Expr =
+    match expr with
+    | Add (a, b) ->
+        let a = foldConstants a
+        let b = foldConstants b
+        match a, b with
+        | Const a, Const b -> Const (a + b)
+        | a, b -> Add (a, b)
+    | ...
+    | Const a -> Const a
+    | Var -> Var
+```
+
+---
+
+## Constant folding - revisited
+
+With catamorphism
+
+```fsharp
+let foldConstantsCata =
+    { new Cata<Expr> with
+        member __.Add a b =
+            match a,b with
+            | Const a, Const b -> Const (a + b)
+            | a, b -> Add (a, b)
+        ...
+        member __.Const a = Const a
+        member __.Var     = Var
+    }
+
+let foldConstants expr = cata foldConstantsCata expr
+```
+
+???
 
 
-module CataCompile =
+doesn't handle all things
 
-    // Compare to the previous compiling code:
+e.g. `2 * 3 * x * 4` -> `6 * x * 4`
 
-    // let rec impl expr =
-    //     match expr with
-    //     | Add (a, b) ->
-    //         let a = impl a
-    //         let b = impl b
-    //         fun x -> a x + b x
-    //     | Sub (a, b) ->
-    //         let a = impl a
-    //         let b = impl b
-    //         fun x -> a x - b x
-    //     | Mul (a, b) ->
-    //         let a = impl a
-    //         let b = impl b
-    //         fun x -> a x * b x
-    //     | Div (a, b) ->
-    //         let a = impl a
-    //         let b = impl b
-    //         fun x -> a x / b x
-    //     | Const a -> fun _ -> a
-    //     | Var     -> fun x -> x
+n-ary multiplication?
 
-    let implCata =
-        { new Cata<float -> float> with
-            member __.Add a b = fun x -> a x + b x
-            member __.Sub a b = fun x -> a x - b x
-            member __.Mul a b = fun x -> a x * b x
-            member __.Div a b = fun x -> a x / b x
-            member __.Const a = fun x -> a
-            member __.Var     = fun x -> x
-        }
+---
 
-    let compile expr = cata implCata expr
+## Constant folding
 
-let h' = CataCompile.compile Functions.g
+Two questions arise:
 
-// identical speed to non-cata version (as they're identical!)
+1. Is this the transformation we wanted?
+2. Is this a valid transformation?
 
-#time
-for _ in 0..100_000_000 do
-    ignore <| h' 12.3
-#time
+--
 
+Let's eyeball it
 
-// We said earlier:
+```
+> make 1.2 2.3 3.4 4.5 |> print
+val it : string = "(((3.4 - 4.5) * ((1.2 + 2.3) + x)) * ((1.2 + 2.3) + x))"
+```
 
-// Two questions arise:
-// 1. Is this the transformation we wanted?
-// 2. Is this a valid transformation?
+```
+> make 1.2 2.3 3.4 4.5 |> foldConstants |> print
+val it : string = "((-1.1 * (3.5 + x)) * (3.5 + x))"
+```
 
-
-// Eye-ball it.
-
-module Print =
-
-    let printCata =
-        { new Cata<string> with
-            member __.Add a b = sprintf "(%s + %s)" a b
-            member __.Sub a b = sprintf "(%s - %s)" a b
-            member __.Mul a b = sprintf "(%s * %s)" a b
-            member __.Div a b = sprintf "(%s / %s)" a b
-            member __.Const a = sprintf "%.1f" a
-            member __.Var     = "x"
-        }
-
-    let print expr = cata printCata expr
-
-Print.print Functions.g
 
 // This does a decent job of the first point,
 // but is hardly a long-term solution for the second.
@@ -390,49 +810,25 @@ Print.print Functions.g
 // expr |> interpret === expr |> compile |> invoke
 
 
-module ConstantFold =
-
-    // doesn't really handle all things (e.g. 2 * 3 * x * 4 -> 6 * x * 4)
-    // n-ary multiplication &c would make this easier
-    let constFoldCata =
-        { new Cata<Expr> with
-            member __.Add a b =
-                match a,b with
-                | Const a, Const b -> Const (a + b)
-                | a, b -> Add (a, b)
-            member __.Sub a b =
-                match a,b with
-                | Const a, Const b -> Const (a - b)
-                | a, b -> Sub (a, b)
-            member __.Mul a b =
-                match a,b with
-                | Const a, Const b -> Const (a * b)
-                | a, b -> Mul (a, b)
-            member __.Div a b =
-                match a,b with
-                | Const a, Const b -> Const (a / b)
-                | a, b -> Div (a, b)
-            member __.Const a = Const a
-            member __.Var     = Var
-        }
-
-    let optimise expr = cata constFoldCata expr
-
+```fsharp
 Functions.g |> Print.print
-Functions.g |> cata ConstantFold.constFoldCata |> Print.print
+Functions.g |> cata foldConstants.constFoldCata |> Print.print
 
-let i = Functions.g |> ConstantFold.optimise |> CataCompile.compile
-
+let i = Functions.g |> foldConstants.optimise |> CataCompile.compile
+```
 // ~4 times slower
 
+
+```fsharp
 #time
 for _ in 0..100_000_000 do
     ignore <| i 12.3
 #time
-
+```
 
 // It's a bit silly that we're multiplying the whole expression by zero!
 
+```fsharp
 module PointlessOperation =
     // bad for nan obvs
     let goCata =
@@ -466,23 +862,29 @@ module PointlessOperation =
         }
 
     let optimise expr = cata goCata expr
+```
 
+```fsharp
 let optimisations =
     [
-        ConstantFold.optimise
+        foldConstants.optimise
         PointlessOperation.optimise
         // ...
     ]
+```
 
 // look at the optimisations
+```fsharp
 Functions.g |> Print.print
-Functions.g |> ConstantFold.optimise |> Print.print
-Functions.g |> ConstantFold.optimise |> PointlessOperation.optimise |> Print.print
+Functions.g |> foldConstants.optimise |> Print.print
+Functions.g |> foldConstants.optimise |> PointlessOperation.optimise |> Print.print
 Functions.g |> PointlessOperation.optimise |> Print.print
+```
 
 // This ISN'T VALID
 // Consider NaN.
 
+```fsharp
 let megaOptimise f =
     optimisations |> List.fold (fun expr opt -> opt expr) f
     //optimisations |> List.fold (|>) f
@@ -493,6 +895,7 @@ let j = Functions.g |> megaOptimise |> CataCompile.compile
 for _ in 0..10_000_000 do
     ignore <| j 12.3
 #time
+```
 
 // More optimisations:
 
@@ -506,6 +909,7 @@ for _ in 0..10_000_000 do
 
 // IL emiting
 
+```fsharp
 open System.Reflection.Emit
 
 type ILOp =
@@ -562,6 +966,7 @@ module IL =
 
 // Let's see the opcodes
 Functions.add1 |> IL.opsToEmit
+```
 
 (*
 From linqpad:
@@ -572,6 +977,7 @@ IL_000B:  add
 IL_000C:  ret
 *)
 
+```fsharp
 // Check out some more
 Functions.times2 |> IL.opsToEmit
 Functions.div3 |> IL.opsToEmit
@@ -582,8 +988,9 @@ Functions.g |> IL.opsToEmit
 
 let o = Functions.div3 |> IL.compile
 o 6.0
+```
 
-
+```fsharp
 let ilUnopt = IL.compile Functions.g
 
 // We're actually _marginally_ faster than the original!
@@ -604,3 +1011,4 @@ let ilOpt = Functions.g |> megaOptimise |> IL.compile
 for _ in 0..100_000_000 do
     ignore <| ilOpt 12.3
 #time
+```

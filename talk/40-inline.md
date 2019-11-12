@@ -1,6 +1,8 @@
 
 ## inline keyword
 
+&nbsp;
+
 Functions marked `inline` are integrated directly into the calling code.
 
 &nbsp;

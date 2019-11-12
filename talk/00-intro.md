@@ -7,10 +7,6 @@ class: center, middle
 
 # Writing performant code in F# #
 
-???
-
-Notes for me
-
 ---
 
 class: split-50
