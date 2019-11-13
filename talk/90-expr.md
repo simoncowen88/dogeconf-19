@@ -799,119 +799,164 @@ val it : string = "(((3.4 - 4.5) * ((1.2 + 2.3) + x)) * ((1.2 + 2.3) + x))"
 val it : string = "((-1.1 * (3.5 + x)) * (3.5 + x))"
 ```
 
+---
 
-// This does a decent job of the first point,
-// but is hardly a long-term solution for the second.
+## Constant folding
 
-// We can test that:
-// expr |> eval === expr |> optimise |> eval
-
-// We can use the same technique to test our compiler:
-// expr |> interpret === expr |> compile |> invoke
-
+In reality we'd write PBTs to test that
 
 ```fsharp
-Functions.g |> Print.print
-Functions.g |> cata foldConstants.constFoldCata |> Print.print
-
-let i = Functions.g |> foldConstants.optimise |> CataCompile.compile
+expr |> eval === expr |> foldConstants |> eval
 ```
-// ~4 times slower
 
+We can use the same technique to test our different evaluators
 
 ```fsharp
-#time
-for _ in 0..100_000_000 do
-    ignore <| i 12.3
-#time
+expr |> interpret === expr |> implement |> invoke
 ```
 
-// It's a bit silly that we're multiplying the whole expression by zero!
+---
+
+## Constant folding
 
 ```fsharp
-module PointlessOperation =
-    // bad for nan obvs
-    let goCata =
-        { new Cata<Expr> with
-            member __.Add a b =
-                match a,b with
-                | Const 0.0, a
-                | a, Const 0.0 -> a
-                | a, b -> Add (a, b)
-            member __.Sub a b =
-                match a,b with
-                | a, Const 0.0 -> a
-                | a, b when a = b -> Const 0.0
-                | a, b -> Sub (a, b)
-            member __.Mul a b =
-                match a,b with
-                | Const 0.0, _
-                | _, Const 0.0
-                    -> Const 0.0
-                | Const 1.0, a
-                | a, Const 1.0
-                    -> a
-                | a, b -> Mul (a, b)
-            member __.Div a b =
-                match a,b with
-                | a, Const 1.0 -> a
-                | a, b when a = b -> Const 1.0
-                | a, b -> Div (a, b)
-            member __.Const a = Const a
-            member __.Var = Var
-        }
+// phase 1 - startup
+let description : Expr = make 1.2 2.3 3.4 4.5
+let optimised : Expr = foldConstants description
+let implementation : float -> float = impl optimised
 
-    let optimise expr = cata goCata expr
+// phase 2 - hot path
+for _ in 1..100_000_000 do
+    ignore <| implementation 98.7
 ```
+
+--
+
+&nbsp;
+
+How does it fare?
+
+--
+
+**~4 times slower**
+
+---
+
+## Other optimisations
+
+```fsharp
+let make a b c d : float -> float =
+    let p1 = c - d
+    let p2 = a + b
+    if p1 = 0.0 then
+        fun x -> 0.0
+    elif p2 = 0.0 then
+        fun x -> p1 * x * x
+    else
+        fun x -> p1 * (p2 + x) * (p2 + x)
+```
+
+### Do nothing - can be removed
+`* 1.0`, `+ 0.0`
+
+### Make the computation irrelavent
+`* 0.0`, `x / x`
+
+---
+
+## Remove stupid operations
+
+```fsharp
+let removeStupidOpsCata =
+    { new Cata<Expr> with
+        member __.Add a b =
+            match a,b with
+            | Const 0.0, a | a, Const 0.0 -> a
+            | a, b -> Add (a, b)
+        member __.Sub a b = ...
+        member __.Mul a b =
+            match a,b with
+            | Const 0.0, _ | _, Const 0.0 -> Const 0.0
+            | Const 1.0, a | a, Const 1.0 -> a
+            | a, b -> Mul (a, b)
+        member __.Div a b =
+            match a,b with
+            | a, Const 1.0 -> a
+            | a, b when a = b -> Const 1.0
+            | a, b -> Div (a, b)
+        member __.Const a = Const a
+        member __.Var = Var
+    }
+let removeStupidOps expr = cata removeStupidOpsCata expr
+```
+
+---
+
+## Combine optimisations
+
+```fsharp
+make 4.5 4.5 1.2 3.2 |> print
+val it : string = "(((4.5 - 4.5) * ((1.2 + 3.2) + x)) * ((1.2 + 3.2) + x))"
+
+make 4.5 4.5 1.2 3.2 |> foldConstants |> print
+val it : string = "((0.0 * (4.4 + x)) * (4.4 + x))"
+
+make 4.5 4.5 1.2 3.2 |> foldConstants |> removeStupidOps |> print
+val it : string = "0.0"
+```
+
+---
+
+// This ISN'T ACTUALLY VALID
+// Consider NaN.
+
+---
+
+## Combine optimisations
 
 ```fsharp
 let optimisations =
     [
-        foldConstants.optimise
-        PointlessOperation.optimise
+        foldConstants
+        removeStupidOps
         // ...
     ]
 ```
 
-// look at the optimisations
 ```fsharp
-Functions.g |> Print.print
-Functions.g |> foldConstants.optimise |> Print.print
-Functions.g |> foldConstants.optimise |> PointlessOperation.optimise |> Print.print
-Functions.g |> PointlessOperation.optimise |> Print.print
-```
-
-// This ISN'T VALID
-// Consider NaN.
-
-```fsharp
-let megaOptimise f =
+let optimise f =
     optimisations |> List.fold (fun expr opt -> opt expr) f
     //optimisations |> List.fold (|>) f
 
-let j = Functions.g |> megaOptimise |> CataCompile.compile
-
-#time
-for _ in 0..10_000_000 do
-    ignore <| j 12.3
-#time
+let optimiseAndImplement expr : (float -> float) = expr |> optimise |> implement
 ```
 
-// More optimisations:
+---
 
-// Common sub-expression - variable extraction
-// Mult (a, a) -> Pow (a, 2)
-// Show adding an algebra case that's not publicly accessible?
+## More optimisations
 
+The list is large
+
+
+- Common sub-expression - variable extraction
+- Mult (a, a) -> Pow (a, 2) (extend the algebra)
+- Show adding an algebra case that's not publicly accessible?
+
+---
 
 // TODO: show a mega expression that reduces lots, but not completely
 
+---
 
-// IL emiting
+## Must go faster
+
+TODO: insert Jeff Goldblum
+
+---
+
+## Must go faster
 
 ```fsharp
-open System.Reflection.Emit
-
 type ILOp =
     | ILAdd
     | ILSub
@@ -919,64 +964,96 @@ type ILOp =
     | ILDiv
     | ILConst of float
     | ILVar
-
-module IL =
-
-    // These opcodes consume from the stack
-    // We assume the inputs are the top elements on the stack
-
-    let ilCata =
-        { new Cata<ILOp list> with
-            member __.Add a b = a @ b @ [ ILAdd ]
-            member __.Sub a b = a @ b @ [ ILSub ]
-            member __.Mul a b = a @ b @ [ ILMul ]
-            member __.Div a b = a @ b @ [ ILDiv ]
-            member __.Const a = [ ILConst a ]
-            member __.Var = [ ILVar ]
-        }
-
-    let opsToEmit = cata ilCata
-
-    let commitOp (ilGen : ILGenerator) (op : ILOp) =
-        match op with
-        | ILAdd -> ilGen.Emit OpCodes.Add
-        | ILSub -> ilGen.Emit OpCodes.Sub
-        | ILMul -> ilGen.Emit OpCodes.Mul
-        | ILDiv -> ilGen.Emit OpCodes.Div
-        | ILConst a -> ilGen.Emit (OpCodes.Ldc_R8, a)
-        | ILVar -> ilGen.Emit OpCodes.Ldarg_0
-
-    // IL emission requires a 'proper' delegate type
-    type private FloatFloat = delegate of float -> float
-
-    let compile expr =
-        // Make a new method to emit il for
-        let dm = DynamicMethod ("f", typeof<float>, [| typeof<float> |])
-        let ilGenerator = dm.GetILGenerator ()
-
-        // Get the IL to emit, and emit it!
-        expr |> opsToEmit |> Seq.iter (commitOp ilGenerator)
-
-        // Add a return
-        ilGenerator.Emit OpCodes.Ret
-
-        // Make this bad boy!
-        let f = dm.CreateDelegate(typeof<FloatFloat>) :?> FloatFloat
-        f.Invoke
-
-// Let's see the opcodes
-Functions.add1 |> IL.opsToEmit
 ```
 
-(*
-From linqpad:
-IL_0000:  nop
-IL_0001:  ldarg.0
-IL_0002:  ldc.r8      00 00 00 00 00 00 F0 3F
-IL_000B:  add
-IL_000C:  ret
-*)
+These opcodes consume from the stack
 
+We assume the inputs are the top elements on the stack
+
+---
+
+## Must go faster
+
+```fsharp
+let ilCata =
+    { new Cata<ILOp list> with
+        member __.Add a b = a @ b @ [ ILAdd ]
+        member __.Sub a b = a @ b @ [ ILSub ]
+        member __.Mul a b = a @ b @ [ ILMul ]
+        member __.Div a b = a @ b @ [ ILDiv ]
+        member __.Const a = [ ILConst a ]
+        member __.Var = [ ILVar ]
+    }
+
+let opsToEmit = cata ilCata
+```
+
+---
+
+## Must go faster
+
+```fsharp
+let commitOp (ilGen : ILGenerator) (op : ILOp) =
+    match op with
+    | ILAdd -> ilGen.Emit OpCodes.Add
+    | ILSub -> ilGen.Emit OpCodes.Sub
+    | ILMul -> ilGen.Emit OpCodes.Mul
+    | ILDiv -> ilGen.Emit OpCodes.Div
+    | ILConst a -> ilGen.Emit (OpCodes.Ldc_R8, a)
+    | ILVar -> ilGen.Emit OpCodes.Ldarg_0
+```
+
+---
+
+## Must go faster
+
+```fsharp
+// IL emission requires a 'proper' delegate type
+type FloatFloat = delegate of float -> float
+
+let compile (expr : Expr) : float -> float =
+    // Make a new method to emit il for
+    let dm = DynamicMethod ("f", typeof<float>, [| typeof<float> |])
+    let ilGenerator = dm.GetILGenerator ()
+
+    // Get the IL to emit, and emit it!
+    expr |> opsToEmit |> Seq.iter (commitOp ilGenerator)
+
+    // Add a return
+    ilGenerator.Emit OpCodes.Ret
+
+    // Make this bad boy!
+    let f = dm.CreateDelegate(typeof<FloatFloat>) :?> FloatFloat
+    f.Invoke
+```
+
+---
+
+## Must go faster
+
+```fsharp
+fun x -> x + 1.0
+```
+
+--
+
+```yaml
+From linqpad:
+IL_0000:  ldarg.0
+IL_0001:  ldc.r8      00 00 00 00 00 00 F0 3F
+IL_000A:  add
+IL_000B:  ret
+```
+
+--
+
+```fsharp
+let add1 = Var + Const 1.0
+opsToEmit add1
+val it : ILOp list = [ILVar; ILConst 1.0; ILAdd]
+```
+
+---
 ```fsharp
 // Check out some more
 Functions.times2 |> IL.opsToEmit
@@ -990,6 +1067,8 @@ let o = Functions.div3 |> IL.compile
 o 6.0
 ```
 
+---
+
 ```fsharp
 let ilUnopt = IL.compile Functions.g
 
@@ -1000,6 +1079,8 @@ let ilUnopt = IL.compile Functions.g
 for _ in 0..100_000_000 do
     ignore <| ilUnopt 12.3
 #time
+
+---
 
 // Why?
 // I suspect field loading from the closure rather than constants.
