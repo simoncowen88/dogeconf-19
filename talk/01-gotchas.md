@@ -1,4 +1,16 @@
 
+class: center, middle
+
+# Gotchas
+
+---
+
+class: center, middle
+
+# Tuples
+
+---
+
 ## Tuples
 
 ```
@@ -92,6 +104,12 @@ let x = f (2, 3) // allocates a tuple!
 
 ---
 
+class: center, middle
+
+# Option
+
+---
+
 ## Option
 
 ```fsharp
@@ -133,6 +151,12 @@ F\# now has struct options.
 ```fsharp
 let thisIsAStructTuple : int ValueOption = ValueSome 3
 ```
+
+---
+
+class: center, middle
+
+# Closures
 
 ---
 
@@ -302,6 +326,12 @@ List of things implementing dome interface.
 
 ---
 
+class: center, middle
+
+# Boxing
+
+---
+
 ## Boxing
 
 ```fsharp
@@ -328,6 +358,12 @@ We need some holder for it - that's a box.
 
 ---
 
+class: center, middle
+
+# DateTime
+
+---
+
 ## DateTime comparison
 
 ```
@@ -351,6 +387,12 @@ let o : IEquatable<DateTime> = upcast DateTime.Now
 ???
 
 a box
+
+---
+
+class: center, middle
+
+# Map and Set
 
 ---
 
@@ -387,6 +429,12 @@ less able to short-circuit
 &nbsp;
 
 Map lookup allocates when `'key` is a value type.
+
+---
+
+class: center, middle
+
+# Enumerating
 
 ---
 
@@ -479,7 +527,15 @@ Rules of thumb:
 - Enumerating an `IEnumerable` or `seq` will allocate.
 - Enumerating a core concrete type (e,g, `array`) will not allocate.
 
---
+---
+
+class: center, middle
+
+# Pop quiz
+
+---
+
+## Enumerating
 
 ```fsharp
 let go (a : int seq) =
@@ -487,17 +543,47 @@ let go (a : int seq) =
         ignore <| a
 ```
 
+Does it allocate?
+
+--
+
+# YES
+
+---
+
+## Enumerating
+
 ```fsharp
 let go (a : int list) =
     for i in a do
         ignore <| a
 ```
 
+Does it allocate?
+
+--
+
+# NO
+
+---
+
+## Enumerating
+
 ```fsharp
 let go (a : int array) =
     for i in a do
         ignore <| a
 ```
+
+Does it allocate?
+
+--
+
+# NO
+
+---
+
+## Enumerating
 
 ```fsharp
 let go (a : int array) =
@@ -506,9 +592,17 @@ let go (a : int array) =
         ignore <| a
 ```
 
-???
+Does it allocate?
 
-yes, no, no, yes
+--
+
+# YES
+
+---
+
+class: center, middle
+
+# Funcs
 
 ---
 
@@ -520,18 +614,34 @@ TODO - drop this?
 
 ---
 
-## Arrays
+class: center, middle
 
+# Arrays
 
-- Allocates a closure
-- Fix is to use an intermediate variable
+---
+
+## Arrays of functions
 
 ```fsharp
 for i in 0..arr.Length-1 do
     arr.[i] ()
 ```
 
-Allocates a closure.
+--
+
+### What's the problem?
+
+--
+
+This allocates.
+
+???
+
+quirk of the compiler
+
+--
+
+### What's the fix?
 
 ```fsharp
 for i in 0..arr.Length-1 do
@@ -539,12 +649,67 @@ for i in 0..arr.Length-1 do
     f ()
 ```
 
-Doesn't allocate a closure.
+---
+
+---
+
+## Tuples - 'synthetic' tuples
 
 --
 
-Why?
+For methods such as:
 
-Some odd quirk of the compiler.
+```csharp
+bool Dictionary<TKey, TValue>.TryGetValue(TKey ket, out TValue value);
+```
+
+--
+
+F\# has a syntax sugar to make this present as
+
+```fsharp
+Dictionary<'key, 'value>.TryGetValue : 'key -> bool * 'value
+```
+
+--
+
+i.e.
+
+```fsharp
+let b, v = dict.TryGetValue "foo"
+```
+
+???
+
+`out` parameters are inherently mutation-focused
+
+Would be very non-idiomatic in F\#
+
+---
+
+## Tuples - 'synthetic' tuples
+
+No tuple is allocated in either of these cases:
+
+--
+
+```fsharp
+let go (dict : Dictionary<string, int>) : int =
+    let b, v = dict.TryGetValue "foo"
+    if b then v else -1
+```
+
+```fsharp
+let go (dict : Dictionary<string, int>) : int =
+    match dict.TryGetValue "foo" with
+    | true, v -> v
+    | _ -> -1
+```
+
+???
+
+`v` is secretly a local variable
+
+Returning the tuple &c will force the allocation
 
 ---

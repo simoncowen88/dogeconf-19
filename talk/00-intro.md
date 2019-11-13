@@ -19,9 +19,9 @@ class: split-50
 
 ### NO
 
-- Flame wars.
-- F\# vs C\# contests.
-- Functional vs OOP deathmatches.
+- Flame wars
+- F\# vs C\# contests*
+- Functional vs OOP deathmatches
 
 ]
 
@@ -31,21 +31,10 @@ class: split-50
 
 ### YES
 
-- F\# performance gotchas.
-- F\# compiler optmisations.
-- Macro-level techniques.
+- F\# performance gotchas
+- F\# compiler optmisations
+- Macro-level techniques
 
-]
-
---
-
-.post-columns[
-
-&nbsp;
-
-&nbsp;
-
-Disclaimer: I reserve the right to point out places where we're faster than C\#. :)
 ]
 
 ---
@@ -58,7 +47,7 @@ It's just one part of the story.
 
 ???
 
-10× dev speedup for a 10% preformance loss
+10× dev speedup for a 10% performance loss
 12 month project done in under 6 weeks
 10ms perf becomes 11ms
 
