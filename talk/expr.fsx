@@ -380,6 +380,8 @@ module Print =
 
 Print.print Functions.g
 
+Decalarative.make 1.2 2.3 3.4 4.5 |> Print.print
+
 // This does a decent job of the first point,
 // but is hardly a long-term solution for the second.
 
@@ -417,6 +419,9 @@ module ConstantFold =
         }
 
     let optimise expr = cata constFoldCata expr
+
+Decalarative.make 1.2 2.3 3.4 4.5 |> Print.print
+Decalarative.make 1.2 2.3 3.4 4.5 |> optimise |> Print.print
 
 Functions.g |> Print.print
 Functions.g |> cata ConstantFold.constFoldCata |> Print.print

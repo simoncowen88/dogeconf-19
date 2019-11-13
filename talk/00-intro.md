@@ -19,9 +19,9 @@ class: split-50
 
 ### NO
 
-- A flame war.
-- An F\# vs C\# contest.
-- A functional vs OOP deathmatch.
+- Flame wars.
+- F\# vs C\# contests.
+- Functional vs OOP deathmatches.
 
 ]
 
@@ -32,7 +32,7 @@ class: split-50
 ### YES
 
 - F\# performance gotchas.
-- Micro-level concerns.
+- F\# compiler optmisations.
 - Macro-level techniques.
 
 ]
