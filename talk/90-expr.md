@@ -596,20 +596,20 @@ by hot path, expr is gone
 
 --
 
+How does it fare?
+
+--
+
+**~6 times slower**
+
+--
+
 Each operation incurs a method call.
 
 ```fsharp
 // fun x -> x + 1.0
 fun x -> ((fun x -> x) x) + ((fun x -> 1.0) x)
 ```
-
---
-
-How does it fare?
-
---
-
-**~6 times slower**
 
 ---
 
