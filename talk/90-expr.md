@@ -1013,11 +1013,12 @@ class: split-50
 
 ## The IL
 
-```fsharp
-fun x -> (c - d) * (a + b + x) * (a + b + x)
-```
-
 .column[
+
+```fsharp
+let make a b c d x =
+    (c - d) * (a + b + x) * (a + b + x)
+```
 
 ```yaml
 IL_0000:  ldarg.2     
