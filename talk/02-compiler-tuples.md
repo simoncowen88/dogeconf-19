@@ -206,10 +206,10 @@ Don Syme has put in the effort here.
 
 As always with performance, it's not obvious.
 
-Benchmark, benchmark, benchmark.
-
 ???
 
 I was surprised by many things here!
+
+Benchmark, benchmark, benchmark.
 
 ---
