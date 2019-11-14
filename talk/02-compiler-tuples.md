@@ -43,6 +43,8 @@ is optimised to:
 let f a b = a + b
 ```
 
+No tuple is allocated.
+
 ???
 
 a bit noddy
