@@ -431,7 +431,7 @@ We need some holder for it - that's a box.
 
 ## Boxing
 
-## Main gotcha
+### Main gotcha
 
 ```fsharp
 let thisIsABox : obj = box 3
