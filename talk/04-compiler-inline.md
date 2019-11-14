@@ -249,13 +249,13 @@ let sum (xs : int array) =
 
 --
 
-No closure was allocated anyway.
+No closure was ever allocated.
 
 &nbsp;
 
 Up-front closure allocation blocked the full inlining.
 
-Performance loss was from all of the function calls.
+Performance loss was from all of the calls to invoke the closure.
 
 ???
 
