@@ -1057,6 +1057,12 @@ class: center, middle
 
 ## Summary
 
-Declarative algebras allow you to centralise optimisations.
+Declarative algebras are great!
 
+Inpectability allows for optimisations.
 
+???
+
+centralised optimisations
+
+new ones benefit all
