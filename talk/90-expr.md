@@ -1043,22 +1043,22 @@ IL_0011:  ret
 .column[
 
 ```fsharp
-make 1.2 2.3 3.4 4.5 |> opsToEmit
+make 0.1 1.2 2.3 3.4 |> opsToEmit
 ```
 
 ```fsharp
 [
-    ILConst 3.4
-    ILConst 4.5
-    ILSub
-    ILConst 1.2
     ILConst 2.3
+    ILConst 3.4
+    ILSub
+    ILConst 0.1
+    ILConst 1.2
     ILAdd
     ILVar
     ILAdd
     ILMul
+    ILConst 0.1
     ILConst 1.2
-    ILConst 2.3
     ILAdd
     ILVar
     ILAdd
