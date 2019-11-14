@@ -1059,10 +1059,17 @@ class: center, middle
 
 Declarative algebras are great!
 
-Inpectability allows for optimisations.
+--
+
+They won't outperform imperative immediately.
+
+--
+
+Inspectability allows for optimisations.
 
 ???
 
-centralised optimisations
+centralised optimisations - new ones benefit all
 
-new ones benefit all
+--
+
