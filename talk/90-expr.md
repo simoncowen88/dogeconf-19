@@ -105,6 +105,23 @@ A `float -> float` function, parameterised by 4 `float`s.
 
 --
 
+```fsharp
+// phase 1 - startup
+let f : float -> float = make 1.2 2.3 3.4 4.5
+
+// phase 2 - hot path
+let x = f 98.7
+```
+
+---
+
+## Don't think, just do
+
+```fsharp
+let make a b c d (x : float) =
+    (c - d) * (a + b + x) * (a + b + x)
+```
+
 &nbsp;
 
 There's no place to do slow up-front work.
