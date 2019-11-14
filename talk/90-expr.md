@@ -514,6 +514,14 @@ work cut out for us
 
 ```fsharp
 let rec evaluate (expr : Expr) (x : float) : float =
+```
+
+---
+
+## Evaluation
+
+```fsharp
+let rec evaluate (expr : Expr) (x : float) : float =
     match expr with
     | Add (a, b) -> (evaluate a x) + (evaluate b x)
     | Sub (a, b) -> (evaluate a x) - (evaluate b x)
@@ -542,6 +550,14 @@ How does it fare?
 better than I expected!
 
 not used the 2 phases
+
+---
+
+## Implementation
+
+```fsharp
+let rec implement (expr : Expr) : float -> float =
+```
 
 ---
 
