@@ -604,12 +604,14 @@ How does it fare?
 
 --
 
-Each operation incurs a method call.
-
 ```fsharp
 // fun x -> x + 1.0
 fun x -> ((fun x -> x) x) + ((fun x -> 1.0) x)
 ```
+
+--
+
+Each operation incurs a method call.
 
 ---
 
