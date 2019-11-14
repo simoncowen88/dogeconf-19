@@ -1009,7 +1009,38 @@ opsToEmit (Input + Const 1.0)
 
 ---
 
+class: split-50
+
 ## The IL
+
+```fsharp
+fun x -> (c - d) * (a + b + x) * (a + b + x)
+```
+
+.column[
+
+```yaml
+IL_0000:  ldarg.2     
+IL_0001:  ldarg.3     
+IL_0002:  sub         
+IL_0003:  ldarg.0     
+IL_0004:  ldarg.1     
+IL_0005:  add         
+IL_0006:  ldarg.s     04 
+IL_0008:  add         
+IL_0009:  mul         
+IL_000A:  ldarg.0     
+IL_000B:  ldarg.1     
+IL_000C:  add         
+IL_000D:  ldarg.s     04 
+IL_000F:  add         
+IL_0010:  mul         
+IL_0011:  ret 
+```
+
+]
+
+.column[
 
 ```fsharp
 make 1.2 2.3 3.4 4.5 |> opsToEmit
@@ -1034,6 +1065,8 @@ make 1.2 2.3 3.4 4.5 |> opsToEmit
     ILMul
 ]
 ```
+
+]
 
 ---
 
