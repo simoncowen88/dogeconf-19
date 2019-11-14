@@ -1079,6 +1079,8 @@ potentially much faster _with_ optimisations
 
 field loading from the closure vs il constants
 
+stupidOps no valid for nans / zeroes anyway!
+
 ---
 
 class: center, middle
