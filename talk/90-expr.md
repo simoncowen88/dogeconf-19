@@ -97,7 +97,7 @@ For use on the hot path.
 ## Don't think, just do
 
 ```fsharp
-let make a b c d (x : float) =
+let make a b c d (x : float) : float =
     (c - d) * (a + b + x) * (a + b + x)
 ```
 
@@ -122,7 +122,7 @@ f is a closure
 ## Don't think, just do
 
 ```fsharp
-let make a b c d (x : float) =
+let make a b c d (x : float) : float =
     (c - d) * (a + b + x) * (a + b + x)
 ```
 
@@ -135,7 +135,7 @@ There's no place to do slow up-front work.
 ## Think a little bit
 
 ```fsharp
-let make a b c d (x : float) =
+let make a b c d (x : float) : float =
     (c - d) * (a + b + x) * (a + b + x)
 ```
 
