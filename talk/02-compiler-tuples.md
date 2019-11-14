@@ -1,4 +1,12 @@
 
+.w100img[![](images/this-is-fine.jpg)]
+
+---
+
+.w100img[![](images/this-is-fire.jpg)]
+
+---
+
 class: center, middle
 
 # Compiler optimisations
@@ -92,6 +100,67 @@ F\# performs around 10% better!
 ???
 
 For floats the situation is reversed!
+
+---
+
+## Tuples - 'synthetic' tuples
+
+--
+
+For methods such as:
+
+```csharp
+bool Dictionary<TKey, TValue>.TryGetValue(TKey ket, out TValue value);
+```
+
+--
+
+F\# has a syntax sugar to make this present as
+
+```fsharp
+Dictionary<'key, 'value>.TryGetValue : 'key -> bool * 'value
+```
+
+--
+
+i.e.
+
+```fsharp
+let b, v = dict.TryGetValue "foo"
+```
+
+???
+
+`out` parameters are inherently mutation-focused
+
+Would be very non-idiomatic in F\#
+
+---
+
+## Tuples - 'synthetic' tuples
+
+No tuple is allocated in either of these cases:
+
+--
+
+```fsharp
+let go (dict : Dictionary<string, int>) : int =
+    let b, v = dict.TryGetValue "foo"
+    if b then v else -1
+```
+
+```fsharp
+let go (dict : Dictionary<string, int>) : int =
+    match dict.TryGetValue "foo" with
+    | true, v -> v
+    | _ -> -1
+```
+
+???
+
+`v` is secretly a local variable
+
+Returning the tuple &c will force the allocation
 
 ---
 

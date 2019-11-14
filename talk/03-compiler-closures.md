@@ -5,29 +5,6 @@ class: center, middle
 
 ---
 
-## Closures - inlining
-
-```fsharp
-let add a b = a + b
-let invokeWithOne (f : int -> int) : int = f 1
-
-let go (a : int) : int = invokeWithOne (add a)
-```
-
---
-
-This actually optimises to...
-
-```fsharp
-let go a = a + 1
-```
-
---
-
-So no closures are allocated.
-
----
-
 ## Closures - capture detection
 
 ```fsharp

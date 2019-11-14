@@ -3,6 +3,10 @@ class: center, middle
 
 # Gotchas
 
+???
+
+unexpected pitfalls
+
 ---
 
 class: center, middle
@@ -34,11 +38,19 @@ Alias for `System.Tuple`
 
 ## Tuples
 
-### Gotcha \#1
+### Main gotcha
 
 `System.Tuple` is a reference type.
 
 So making a tuple allocates.
+
+???
+
+is this an issue?
+
+.net is pretty quick with allocating / short-lived objects
+
+GC pauses
 
 --
 
@@ -54,7 +66,7 @@ let thisIsAStructTuple : (struct (int * string)) = struct (1, "foo")
 
 ## Tuples
 
-### Gotcha \#2
+### Side gotcha
 
 ```fsharp
 type Foo =
@@ -77,7 +89,7 @@ class Foo
 
 ## Tuples
 
-### Gotcha \#2
+### Side gotcha
 
 ```fsharp
 type Foo =
@@ -136,7 +148,7 @@ type 'a Option =
 
 ## Option
 
-### Gotcha \#1
+### Main gotcha
 
 `'a Option` is a reference type.
 
@@ -170,6 +182,8 @@ let thisIsAClosure : int -> int = f 3
 Used extensively in F\#
 
 ???
+
+like Func
 
 higher-order functions
 
@@ -234,6 +248,10 @@ let g = new g_impl (a)
 let x = g.Invoke 3
 ```
 
+???
+
+named as foo@46
+
 ---
 
 ## Closures - behind the curtain
@@ -280,6 +298,10 @@ HOFs
 
 --
 
+### What is it?
+
+--
+
 ```fsharp
 type thisIsAClosure_impl (a : int) =
     inherit FSharpFunc<int, int>
@@ -290,11 +312,47 @@ type thisIsAClosure_impl (a : int) =
 
 ## Closures
 
-### Gotcha \#1
+### Main gotcha
 
 Closures are reference types.
 
 So making a closure allocates.
+
+---
+
+## Closures
+
+### Side gotcha
+
+--
+
+```fsharp
+type thisIsAClosure_impl (a : int) =
+    inherit FSharpFunc<int, int>
+    override __.Invoke (b : int) = a + b
+```
+
+???
+
+notice override
+
+--
+
+Invoking a closure is a virtual call.
+
+Virtual calls are a bit slower.
+
+???
+
+concrete type - just jump
+
+interface / virtual - lookup table
+
+---
+
+class: center, middle
+
+# Boxing
 
 ---
 
@@ -305,30 +363,43 @@ let thisIsABox : obj = box 3
 ```
 
 ```fsharp
-let o : IComparable<DateTime> = upcast DateTime.Now
+let thisIsAlsoABox = DateTime.Now :> IComparable<DateTime>
 ```
 
 --
 
+In C\#
+
 ```csharp
-object o = 3;
+object thisIsABox = 3;
+```
+
+```csharp
+IComparable<DateTime> thisIsAlsoABox = DateTime.Now;
 ```
 
 ???
 
 implicit in C\#
 
---
-
-Value of unknown type.
-
-List of things implementing dome interface.
 
 ---
 
-class: center, middle
+## Boxing
 
-# Boxing
+```fsharp
+let thisIsABox : obj = box 3
+```
+
+```fsharp
+let thisIsAlsoABox = DateTime.Now :> IComparable<DateTime>
+```
+
+--
+
+Value-type treated as an obj.
+
+Value-type treated as an interface.
 
 ---
 
@@ -345,16 +416,40 @@ let thisIsABox : obj = box 3
 --
 
 .quote[
-  > To have a unified type system and allow value types to have a completely different representation of their underlying data from the way that reference types represent their underlying data (e.g., an int is just a bucket of thirty-two bits which is completely different than a reference type).
+> [Required to] have a unified type system and allow value types to have a completely different representation of their underlying data from the way that reference types represent their underlying data (e.g., an int is just a bucket of thirty-two bits which is completely different than a reference type).
 ]
 
 --
 
 `obj` is a reference type.
 
-We can't just upcast a value type in there.
+We can't just upcast a value type to `obj`.
 
 We need some holder for it - that's a box.
+
+---
+
+## Boxing
+
+## Main gotcha
+
+```fsharp
+let thisIsABox : obj = box 3
+```
+
+Boxing a value type allocates a box.
+
+--
+
+```fsharp
+let thisIsAlsoABox = DateTime.Now :> IComparable<DateTime>
+```
+
+You may not realise you're even boxing.
+
+???
+
+c\# - (long)(int)o
 
 ---
 
@@ -380,13 +475,16 @@ This allocates.
 
 --
 
+### Why?!
+
+--
+
 ```fsharp
-let o : IEquatable<DateTime> = upcast DateTime.Now
+let (=) (a : DateTime) (b : DateTime) : bool =
+    let o1 : obj = box a
+    let o2 : obj = box b
+    o1.Equals o2
 ```
-
-???
-
-a box
 
 ---
 
@@ -408,27 +506,51 @@ let thisIsASet : int Set = [ 1; 2; 3 ] |> Set.ofList
 
 --
 
-### What's the problem?
+### Main gotcha
 
 They are comparison-based (not hash-based).
 
---
-
-Lookup and insert are `log n`.
-
---
-
-Comparisons are often more expensive than hashes / equalities.
-
 ???
+
+Comparisons often more expensive than hashes / equalities
+
 
 less able to short-circuit
 
 --
 
-&nbsp;
+Lookup and insert are `log n`.
+
+---
+
+## Map and Set
+
+```fsharp
+let thisIsAMap : Map<int, string> = [ 1, "one" ; 2, "two" ] |> Map.ofList
+```
+
+```fsharp
+let thisIsASet : int Set = [ 1; 2; 3 ] |> Set.ofList
+```
+
+### Side gotcha
+
+--
 
 Map lookup allocates when `'key` is a value type.
+
+--
+
+### Why?!
+
+--
+
+```fsharp
+let compare<'a when 'a : IComparable> (a : 'a) (b : 'a) : int =
+    let o1 : IComparable = upcast a
+    let o2 : obj = box a
+    o1.Compare o2
+```
 
 ---
 
@@ -464,23 +586,6 @@ Sometimes.
 
 How does it work?
 
---
-
-```fsharp
-type IEnumerator<'a> =
-    abstract MoveNext : unit -> bool
-    abstract Current : 'a
-
-type IEnumerable<'a> =
-    abstract GetEnumerator : unit -> IEnumerator<'a>
-```
-
----
-
-## Enumerating
-
-How does it work?
-
 ```fsharp
 for x in xs do
     printfn "%d" x
@@ -499,6 +604,25 @@ while enumerator.MoveNext () do
 
 ## Enumerating
 
+What's an enumerator?
+
+--
+
+```fsharp
+type IEnumerator<'a> =
+    abstract MoveNext : unit -> bool
+    abstract Current : 'a
+    abstract Reset : unit -> unit
+    abstract Dispose : unit -> unit
+
+type IEnumerable<'a> =
+    abstract GetEnumerator : unit -> IEnumerator<'a>
+```
+
+---
+
+## Enumerating
+
 ```fsharp
 type IEnumerable<'a> =
     abstract GetEnumerator : unit -> IEnumerator<'a>
@@ -508,15 +632,28 @@ We can't help but create an object to return here.
 
 ???
 
+either ref type
+
+or boxed value type
+
 surely it _always_ allocates?
 
 --
 
-Various core data types return enumerators that are structs.
-
-But this doesn't help - we learned above that they get boxed.
+&nbsp;
 
 .NET does some duck-typing here.
+
+```fsharp
+let enumerator = xs.GetEnumerator ()
+while enumerator.MoveNext () do
+    let x = enumerator.Current
+    printfn "%d" x
+```
+
+???
+
+core type enumerators are structs
 
 ---
 
@@ -538,9 +675,9 @@ class: center, middle
 ## Enumerating
 
 ```fsharp
-let go (a : int seq) =
-    for i in a do
-        ignore <| a
+let go (xs : int seq) =
+    for x in xs do
+        ...
 ```
 
 Does it allocate?
@@ -554,9 +691,9 @@ Does it allocate?
 ## Enumerating
 
 ```fsharp
-let go (a : int list) =
-    for i in a do
-        ignore <| a
+let go (xs : int list) =
+    for x in xs do
+        ...
 ```
 
 Does it allocate?
@@ -570,9 +707,9 @@ Does it allocate?
 ## Enumerating
 
 ```fsharp
-let go (a : int array) =
-    for i in a do
-        ignore <| a
+let go (xs : int array) =
+    for x in xs do
+        ...
 ```
 
 Does it allocate?
@@ -586,10 +723,10 @@ Does it allocate?
 ## Enumerating
 
 ```fsharp
-let go (a : int array) =
-    let a : int seq = upcast a
-    for i in a do
-        ignore <| a
+let go (xs : int array) =
+    let xs' : int seq = upcast xs
+    for x in xs' do
+        ...
 ```
 
 Does it allocate?
@@ -602,21 +739,7 @@ Does it allocate?
 
 class: center, middle
 
-# Funcs
-
----
-
-## Funcs
-
-TODO - drop this?
-
-`'a -> 'b` <-> `Func<'a, 'b>`
-
----
-
-class: center, middle
-
-# Arrays
+# Arrays of functions
 
 ---
 
@@ -633,7 +756,7 @@ for i in 0..arr.Length-1 do
 
 --
 
-This allocates.
+This allocates a closure for every item.
 
 ???
 
@@ -641,75 +764,29 @@ quirk of the compiler
 
 --
 
+```fsharp
+for i in 0..arr.Length-1 do
+    let f = closure_impl ()
+    f.Invoke (arr, i)
+```
+
+---
+
+## Arrays of functions
+
+```fsharp
+for i in 0..arr.Length-1 do
+    arr.[i] ()
+```
+
 ### What's the fix?
+
+--
 
 ```fsharp
 for i in 0..arr.Length-1 do
     let f = arr.[i]
     f ()
 ```
-
----
-
----
-
-## Tuples - 'synthetic' tuples
-
---
-
-For methods such as:
-
-```csharp
-bool Dictionary<TKey, TValue>.TryGetValue(TKey ket, out TValue value);
-```
-
---
-
-F\# has a syntax sugar to make this present as
-
-```fsharp
-Dictionary<'key, 'value>.TryGetValue : 'key -> bool * 'value
-```
-
---
-
-i.e.
-
-```fsharp
-let b, v = dict.TryGetValue "foo"
-```
-
-???
-
-`out` parameters are inherently mutation-focused
-
-Would be very non-idiomatic in F\#
-
----
-
-## Tuples - 'synthetic' tuples
-
-No tuple is allocated in either of these cases:
-
---
-
-```fsharp
-let go (dict : Dictionary<string, int>) : int =
-    let b, v = dict.TryGetValue "foo"
-    if b then v else -1
-```
-
-```fsharp
-let go (dict : Dictionary<string, int>) : int =
-    match dict.TryGetValue "foo" with
-    | true, v -> v
-    | _ -> -1
-```
-
-???
-
-`v` is secretly a local variable
-
-Returning the tuple &c will force the allocation
 
 ---

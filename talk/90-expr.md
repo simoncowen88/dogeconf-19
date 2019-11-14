@@ -1,6 +1,12 @@
 class: center, middle
 
-# How we do it
+# The bigger picture
+
+???
+
+seen gotchas in the small
+
+how do you win in the large?
 
 ---
 

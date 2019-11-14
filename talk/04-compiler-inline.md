@@ -37,7 +37,6 @@ F\# is very aggressive with its inlining.
 
 ---
 
-
 ## Inlining example
 
 ```fsharp
@@ -52,6 +51,11 @@ What does the compiled code for `g` actually look like?
 ---
 
 ## Inlining example - no optimisations
+
+```fsharp
+let f a = 2 * a
+let g a = f (a + 1)
+```
 
 ```yaml
 f:
@@ -76,6 +80,11 @@ Look at g first
 
 ## Inlining example - optimised
 
+```fsharp
+let f a = 2 * a
+let g a = f (a + 1)
+```
+
 ```yaml
 g:
 IL_0000:  ldc.i4.2  # load 2              [2]
@@ -86,26 +95,15 @@ IL_0004:  mul       # multiply            [2*(a+1)]
 IL_0005:  ret
 ```
 
----
-
-## Inlining example - analysis
-
-Remember the original code:
-
-```fsharp
-let f a = 2 * a
-let g a = f (a + 1)
-```
-
-The call site of `f` in `g` was replaced by the body `f`.
-
-This leaves `g` looking like:
+--
 
 ```fsharp
 let g a = 2 * (a + 1)
 ```
 
-And in fact, these compile to the exact same IL.
+???
+
+call site of `f` in `g` was replaced by the body of `f`
 
 ---
 
@@ -164,7 +162,7 @@ This takes ~650 nanoseconds for 1000 elements.
 
 But ah-ha you think, this will allocate a closure every time!
 
-So you force a statically allocated closure.
+So you force a closure to be allocated once up-front.
 
 ```fsharp
 let folder = id <| fun a b -> a + b
@@ -173,7 +171,7 @@ let sum (xs : int array) = fold folder 0 xs
 
 --
 
-This takes ~5000 nanoseconds for 1000 elements!
+This takes ~5000 nanoseconds for 1000 elements.
 
 ???
 
@@ -205,7 +203,7 @@ inline it!
 ```fsharp
 let sum (xs : int array) =
     let mutable acc = 0
-    let len = xs.Length-1
+    let len = xs.Length - 1
     for i in 0..len do
         acc <- (fun a b -> a + b) acc xs.[i]
     acc
@@ -218,7 +216,7 @@ let sum (xs : int array) =
 ```fsharp
 let sum (xs : int array) =
     let mutable acc = 0
-    let len = xs.Length-1
+    let len = xs.Length - 1
     for i in 0..len do
         acc <- (fun a b -> a + b) acc xs.[i]
     acc
@@ -234,8 +232,8 @@ Here, that means inlining `(fun a b -> a + b)`
 
 ```fsharp
 let sum (xs : int array) =
-    let mutable acc = 1
-    let len = xs.Length-1
+    let mutable acc = 0
+    let len = xs.Length - 1
     for i in 0..len do
         acc <- acc + xs.[i]
     acc
@@ -243,10 +241,16 @@ let sum (xs : int array) =
 
 --
 
-No closure allocated.
+No closure was allocated anyway.
+
+&nbsp;
 
 Up-front closure allocation blocked the full inlining.
 
 Perf hit was was simply from all of the function calls.
+
+???
+
+virtcalls to closure
 
 ---

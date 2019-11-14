@@ -29,11 +29,11 @@ class: split-50
 
 .column[
 
-### YES
+### SOME
 
 - F\# performance gotchas
 - F\# compiler optmisations
-- Macro-level techniques
+- Higher-level techniques for writing performant code
 
 ]
 
@@ -48,7 +48,11 @@ It's just one part of the story.
 ???
 
 10× dev speedup for a 10% performance loss
-12 month project done in under 6 weeks
-10ms perf becomes 11ms
+
+12 month -> 6 weeks / 10ms -> 11ms
+
+there are trade-offs
+
+will see how to minimise them
 
 ---
