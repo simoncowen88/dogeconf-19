@@ -1061,15 +1061,18 @@ Declarative algebras are great!
 
 --
 
+&nbsp;
+
 They won't outperform imperative immediately.
 
 --
 
-Inspectability allows for optimisations.
+They take advantage of startup vs hot-path.
+
+--
+
+Their inspectability allows for optimisations.
 
 ???
 
 centralised optimisations - new ones benefit all
-
---
-
