@@ -1,7 +1,11 @@
 
+class: center, middle
+
 .w100img[![](images/this-is-fine.jpg)]
 
 ---
+
+class: center, middle
 
 .w100img[![](images/this-is-fire.jpg)]
 
@@ -63,9 +67,9 @@ extremely common use
 
 --
 
-Becomes case statements (or jump tables if `int`)
+Becomes case statements (or jump tables if `int`).
 
-No tuple is allocated*
+No tuple is allocated.*
 
 ???
 
@@ -75,7 +79,25 @@ even with very complex scenarios (nested dus &c)
 
 ---
 
+class: split-50
+
 ## Tuples - pattern matching (vs C\#) 🔥🔥🔥
+
+.column[
+
+```fsharp
+let f a b =
+    match a, b with
+    | 0, 0 -> 0
+    | 0, 1 -> 1
+    | 1, 0 -> 2
+    | 1, 1 -> 3
+    | _ -> -1
+```
+
+]
+
+.column[
 
 ```csharp
 int F (int a, int b)
@@ -90,16 +112,24 @@ int F (int a, int b)
     }
 }
 ```
+]
 
 --
 
+.post-columns[
+
 Very different compiled code.
 
-F\# performs around 10% better!
+F\# performs around 10% better.
+
+]
+
+--
+
+For floats the situation is reversed.
 
 ???
 
-For floats the situation is reversed!
 
 ---
 
@@ -139,10 +169,6 @@ Would be very non-idiomatic in F\#
 
 ## Tuples - 'synthetic' tuples
 
-No tuple is allocated in either of these cases:
-
---
-
 ```fsharp
 let go (dict : Dictionary<string, int>) : int =
     let b, v = dict.TryGetValue "foo"
@@ -156,6 +182,10 @@ let go (dict : Dictionary<string, int>) : int =
     | _ -> -1
 ```
 
+--
+
+No tuple is allocated in either of these cases.
+
 ???
 
 `v` is secretly a local variable
@@ -166,13 +196,13 @@ Returning the tuple &c will force the allocation
 
 ## Tuples - summary
 
-Heavily optimised in a huge number of scenarios.
+Heavily optimised in a large number of scenarios.
 
 Don Syme has put in the effort here.
 
 &nbsp;
 
-As always with perf, it's not obvious.
+As always with performance, it's not obvious.
 
 Benchmark, benchmark, benchmark.
 

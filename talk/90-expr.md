@@ -38,7 +38,7 @@ Write a declarative algebra that can outperform `float -> float` functions.
 
 --
 
-Algebra : set of types and methods acting on them.
+Algebra : set of types and methods.
 
 Declarative : not an implementation, simply a description.
 
@@ -187,6 +187,12 @@ let make a b c d : float -> float =
         p1 * (a + b + x) * (a + b + x)
 ```
 
+???
+
+the compiler can't constant-fold
+
+(to it, these aren't constants)
+
 ---
 
 ## Think a lot bit
@@ -236,7 +242,7 @@ What if the code changes?
 
 --
 
-Did you cover all the optimisations?
+Did you cover all optimisations?
 
 --
 
@@ -249,6 +255,10 @@ Can you still understand the logic?
 --
 
 How far do you go?
+
+???
+
+do you benefit from new optimisations?
 
 --
 
@@ -277,16 +287,16 @@ type Expr =
     | Mul of Expr * Expr
     | Div of Expr * Expr
     | Const of float
-    | Var
+    | Input
 ```
 
 ???
 
-Var = input variable
+Input = input variable
 
 --
 
-Algebra : set of types and methods acting on them.
+Algebra : set of types and methods.
 
 Declarative : not an implementation, simply a description.
 
@@ -310,9 +320,9 @@ let make a b c d : Expr =
   Mul (
     Mul (
       Sub (Const c, Const d),
-      Add ((Add (Const a, Const b)), Var)
+      Add ((Add (Const a, Const b)), Input)
     ),
-    Add ((Add (Const a, Const b)), Var)
+    Add ((Add (Const a, Const b)), Input)
   )
 ```
 
@@ -331,16 +341,16 @@ let (/) a b = Div (a, b)
 
 ```fsharp
 // fun x -> x + 1.0
-let add1 : Expr = Add (Var, (Const 1.0))
-let add1 : Expr = Var + (Const 1.0)
+let add1 : Expr = Add (Input, (Const 1.0))
+let add1 : Expr = Input + (Const 1.0)
 ```
 
 --
 
 ```fsharp
 // fun x -> x * 2.0
-let times2 : Expr = Mult (Var, (Const 2.0))
-let times2 : Expr = Var * (Const 2.0)
+let times2 : Expr = Mult (Input, (Const 2.0))
+let times2 : Expr = Input * (Const 2.0)
 ```
 
 ---
@@ -364,7 +374,7 @@ let make a b c d : Expr =
     let b = Const b
     let c = Const c
     let d = Const d
-    let x = Var
+    let x = Input
     (c - d) * (a + b + x) * (a + b + x)
 ```
 
@@ -384,25 +394,29 @@ Not much. Yet.
 
 &nbsp;
 
-The original function was opaque.
+Original function was opaque.
 
-We relied compiler's optimisations, but they only happen at JIT.
+Relied on compiler's optimisations.
 
 It can't leverage the 2 phases.
+
+???
+
+or our hand-crafted optimisations
 
 --
 
 &nbsp;
 
-The new expression is inspectable.
+New expression is inspectable.
 
-It's just a description of what we want to do.
+Just a description of what we want to do.
 
 What are we going to do with it?
 
 ---
 
-## Inspectability
+## Printing
 
 ```fsharp
 let rec print expr =
@@ -412,22 +426,29 @@ let rec print expr =
     | Mul (a, b) -> sprintf "(%s * %s)" (impl a) (impl b)
     | Div (a, b) -> sprintf "(%s / %s)" (impl a) (impl b)
     | Const a    -> sprintf "%.1f" a
-    | Var        -> "x"
+    | Input        -> "x"
 ```
 
-A simple evaluator for our algebra
+A simple evaluator for our algebra.
 
 ---
 
 ## Printing
 
+
 ```fsharp
-let make a b c d : Expr =
-    let a = Const a
-    let b = Const b
-    let c = Const c
-    let d = Const d
-    let x = Var
+let rec print expr =
+    match expr with
+    | Add (a, b) -> sprintf "(%s + %s)" (impl a) (impl b)
+    | Sub (a, b) -> sprintf "(%s - %s)" (impl a) (impl b)
+    | Mul (a, b) -> sprintf "(%s * %s)" (impl a) (impl b)
+    | Div (a, b) -> sprintf "(%s / %s)" (impl a) (impl b)
+    | Const a    -> sprintf "%.1f" a
+    | Input        -> "x"
+```
+
+```fsharp
+let make a b c d = ...
     (c - d) * (a + b + x) * (a + b + x)
 ```
 
@@ -460,7 +481,11 @@ let make a b c d : float -> float =
     fun x -> (c - d) * (a + b + x) * (a + b + x)
 ```
 
-100,000,000 invocations takes ~300ms
+100,000,000 invocations takes ~300ms.
+
+???
+
+work cut out for us
 
 ---
 
@@ -474,7 +499,7 @@ let rec evaluate (expr : Expr) (x : float) : float =
     | Mul (a, b) -> (evaluate a x) * (evaluate b x)
     | Div (a, b) -> (evaluate a x) / (evaluate b x)
     | Const a -> a
-    | Var -> x
+    | Input -> x
 ```
 
 ???
@@ -511,9 +536,8 @@ let rec implement (expr : Expr) : float -> float =
     | Sub (a, b) -> ...
     | Mul (a, b) -> ...
     | Div (a, b) -> ...
-    | Const a ->
-        fun _ -> a
-    | Var -> fun x -> x
+    | Const a -> fun x -> a
+    | Input -> fun x -> x
 ```
 
 ---
@@ -529,13 +553,20 @@ let implementation : float -> float = implement description
 let x = implementation 98.7
 ```
 
+???
+
+by hot path, expr is gone
+
 --
 
 Each operation incurs a method call.
 
---
+```fsharp
+// fun x -> x + 1.0
+fun x -> ((fun x -> x) x) + ((fun x -> 1.0) x)
+```
 
-&nbsp;
+--
 
 How does it fare?
 
@@ -596,7 +627,7 @@ let rec foldConstants (expr : Expr) : Expr =
     | Mul (a, b) -> ...
     | Div (a, b) -> ...
     | Const a -> Const a
-    | Var -> Var
+    | Input -> Input
 ```
 
 ???
@@ -652,6 +683,12 @@ We could also test our different evaluators.
 expr |> evaluate === expr |> implement |> invoke
 ```
 
+???
+
+randomised expressions
+
+randomised inputs
+
 ---
 
 ## Implementation
@@ -676,6 +713,10 @@ How does it fare?
 
 **~4 times slower**
 
+???
+
+12 -> 6 -> 4
+
 ---
 
 ## Further optimisations
@@ -687,19 +728,19 @@ let removeStupidOps expr =
         let a = foldConstants a
         let b = foldConstants b
         match a, b with
-        | Const 0.0, a | a, Const 0.0 -> a
+        | Const 0.0, e | e, Const 0.0 -> e // (0 + e), (e + 0)
         | a, b -> Add (a, b)
     | Sub (a, b) -> ...
     | Mul (a, b) ->
         let a = foldConstants a
         let b = foldConstants b
         match a,b with
-        | Const 0.0, _ | _, Const 0.0 -> Const 0.0
-        | Const 1.0, a | a, Const 1.0 -> a
+        | Const 0.0, _ | _, Const 0.0 -> Const 0.0 // (0 * e), (e * 0)
+        | Const 1.0, e | e, Const 1.0 -> e // (1 * e), (e * 1)
         | a, b -> Mul (a, b)
     | Div (a, b) -> ...
     | Const a -> Const a
-    | Var -> Var
+    | Input -> Input
 ```
 
 ---
@@ -707,21 +748,21 @@ let removeStupidOps expr =
 ## Combining optimisations
 
 ```fsharp
-make 4.5 4.5 1.2 3.2 |> print
+make 1.2 3.2 4.5 4.5 |> print
 "(((4.5 - 4.5) * ((1.2 + 3.2) + x)) * ((1.2 + 3.2) + x))"
 ```
 
 --
 
 ```fsharp
-make 4.5 4.5 1.2 3.2 |> foldConstants |> print
+make 1.2 3.2 4.5 4.5 |> foldConstants |> print
 "((0.0 * (4.4 + x)) * (4.4 + x))"
 ```
 
 --
 
 ```fsharp
-make 4.5 4.5 1.2 3.2 |> foldConstants |> removeStupidOps |> print
+make 1.2 3.2 4.5 4.5 |> foldConstants |> removeStupidOps |> print
 "0.0"
 ```
 
@@ -759,7 +800,11 @@ How does it fare?
 
 ???
 
+FOR THIS CASE
+
 still slower if optimisations don't reduce it
+
+qualified success
 
 ---
 
@@ -775,6 +820,8 @@ class: center, middle
 
 ---
 
+class: center, middle
+
 .w100img[![](images/must-go-faster.gif)]
 
 ---
@@ -787,7 +834,7 @@ let f x = x + 1.0
 
 --
 
-Using LINQPad...
+Using LINQPad... (or ILSpy, or ildasm, or new Rider)
 
 ```yaml
 IL_0000:  ldarg.0                             # [x]
@@ -805,26 +852,44 @@ add consumes from the stack and pushes back on
 ## IL operations
 
 ```fsharp
+type Expr =
+    | Add of Expr * Expr
+    | Sub of Expr * Expr
+    | Mul of Expr * Expr
+    | Div of Expr * Expr
+    | Const of float
+    | Input
+```
+
+--
+
+```fsharp
 type ILOp =
     | ILAdd
     | ILSub
     | ILMul
     | ILDiv
     | ILConst of float
-    | ILVar
+    | ILInput
 ```
+
+???
+
+consume from stack
+
+just need to ensure stack is correct
 
 ---
 
-## Expr -> IL
+## Converting to IL
 
 ```fsharp
 let rec opsToEmit (expr : Expr) : ILOp list =
     match expr with
     | Add (a, b) ->
-        let a = opsToEmit a
-        let b = opsToEmit b
-        a @ b @ [ ILAdd ]
+        let a = opsToEmit a   // stack: [a]
+        let b = opsToEmit b   // stack: [b; a]
+        a @ b @ [ ILAdd ]     // stack: [a + b]
     | Sub (a, b) ->
         let a = opsToEmit a
         let b = opsToEmit b
@@ -832,7 +897,7 @@ let rec opsToEmit (expr : Expr) : ILOp list =
     | Mul (a, b) -> ...
     | Div (a, b) -> ...
     | Const a -> [ ILConst a ]
-    | Var -> [ ILVar ]
+    | Input -> [ ILInput ]
 ```
 
 ---
@@ -840,14 +905,14 @@ let rec opsToEmit (expr : Expr) : ILOp list =
 ## Emitting IL
 
 ```fsharp
-let commitOp (ilGen : ILGenerator) (op : ILOp) =
+let emitOp (ilGen : ILGenerator) (op : ILOp) =
     match op with
     | ILAdd ->     ilGen.Emit OpCodes.Add
     | ILSub ->     ilGen.Emit OpCodes.Sub
     | ILMul ->     ilGen.Emit OpCodes.Mul
     | ILDiv ->     ilGen.Emit OpCodes.Div
     | ILConst a -> ilGen.Emit (OpCodes.Ldc_R8, a)
-    | ILVar ->     ilGen.Emit OpCodes.Ldarg_0
+    | ILInput ->   ilGen.Emit OpCodes.Ldarg_0
 ```
 
 ---
@@ -864,7 +929,7 @@ let compile (expr : Expr) : float -> float =
     let ilGenerator = dm.GetILGenerator ()
 
     // Get the IL to emit, and emit it
-    expr |> opsToEmit |> Seq.iter (commitOp ilGenerator)
+    expr |> opsToEmit |> Seq.iter (emitOp ilGenerator)
 
     // Add a return
     ilGenerator.Emit OpCodes.Ret
@@ -892,14 +957,56 @@ IL_000B:  ret
 --
 
 ```fsharp
-opsToEmit (Var + Const 1.0)
+opsToEmit (Input + Const 1.0)
 ```
 
 ```fsharp
 [
-    ILVar
+    ILInput
     ILConst 1.0
     ILAdd
+]
+```
+
+---
+
+## The IL
+
+```fsharp
+make 1.2 2.3 3.4 4.5 |> opsToEmit
+```
+
+```fsharp
+[
+    ILConst 3.4
+    ILConst 4.5
+    ILSub
+    ILConst 1.2
+    ILConst 2.3
+    ILAdd
+    ILVar
+    ILAdd
+    ILMul
+    ILConst 1.2
+    ILConst 2.3
+    ILAdd
+    ILVar
+    ILAdd
+    ILMul
+]
+```
+
+---
+
+## The IL
+
+```fsharp
+make 1.2 2.3 3.4 4.5 |> optimise |> opsToEmit
+```
+
+```fsharp
+[
+    ILConst 0.0
 ]
 ```
 
@@ -929,9 +1036,13 @@ How does it fare?
 
 ???
 
+potentially much faster _with_ optimisations
+
 field loading from the closure vs il constants
 
 ---
+
+class: center, middle
 
 .w100img[![](images/i-am-speed.jpg)]
 
@@ -945,5 +1056,7 @@ class: center, middle
 ---
 
 ## Summary
+
+Declarative algebras allow you to centralise optimisations.
 
 

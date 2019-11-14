@@ -44,8 +44,6 @@ let f a = 2 * a
 let g a = f (a + 1)
 ```
 
-&nbsp;
-
 What does the compiled code for `g` actually look like?
 
 ---
@@ -160,9 +158,13 @@ This takes ~650 nanoseconds for 1000 elements.
 
 &nbsp;
 
-But ah-ha you think, this will allocate a closure every time!
+But this will allocate a closure.
 
-So you force a closure to be allocated once up-front.
+--
+
+So you force a closure to be allocated up-front.
+
+--
 
 ```fsharp
 let folder = id <| fun a b -> a + b
@@ -176,6 +178,12 @@ This takes ~5000 nanoseconds for 1000 elements.
 ???
 
 what went wrong?
+
+---
+
+class: center, middle
+
+.w100img[![](images/not-sure-fry.jpg)]
 
 ---
 
@@ -247,7 +255,7 @@ No closure was allocated anyway.
 
 Up-front closure allocation blocked the full inlining.
 
-Perf hit was was simply from all of the function calls.
+Performance loss was from all of the function calls.
 
 ???
 

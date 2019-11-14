@@ -87,7 +87,7 @@ You can't actually evaluate it yet
 // Benchmark the imperative version
 
 #time
-for _ in 0..100_000_000 do
+for _ in 0..100_000 do
     ignore <| Functions.f 12.3
 #time
 
@@ -109,7 +109,7 @@ module Interpret =
 // ~12 times slower
 
 #time
-for _ in 0..100_000_000 do
+for _ in 0..100_000 do
     ignore <| Interpret.eval Functions.g 12.3
 #time
 
@@ -177,7 +177,7 @@ let compiled = Compile.impl Functions.g
 // ~6 times slower
 
 #time
-for _ in 0..100_000_000 do
+for _ in 0..100_000 do
     ignore <| compiled 12.3
 #time
 
@@ -350,7 +350,7 @@ let h' = CataCompile.compile Functions.g
 // identical speed to non-cata version (as they're identical!)
 
 #time
-for _ in 0..100_000_000 do
+for _ in 0..100_000 do
     ignore <| h' 12.3
 #time
 
@@ -421,7 +421,7 @@ module ConstantFold =
     let optimise expr = cata constFoldCata expr
 
 Decalarative.make 1.2 2.3 3.4 4.5 |> Print.print
-Decalarative.make 1.2 2.3 3.4 4.5 |> optimise |> Print.print
+Decalarative.make 1.2 2.3 3.4 4.5 |> ConstantFold.optimise |> Print.print
 
 Functions.g |> Print.print
 Functions.g |> cata ConstantFold.constFoldCata |> Print.print
@@ -431,7 +431,7 @@ let i = Functions.g |> ConstantFold.optimise |> CataCompile.compile
 // ~4 times slower
 
 #time
-for _ in 0..100_000_000 do
+for _ in 0..100_000 do
     ignore <| i 12.3
 #time
 
@@ -495,7 +495,7 @@ let megaOptimise f =
 let j = Functions.g |> megaOptimise |> CataCompile.compile
 
 #time
-for _ in 0..10_000_000 do
+for _ in 0..10_000 do
     ignore <| j 12.3
 #time
 
@@ -589,13 +589,15 @@ let o = Functions.div3 |> IL.compile
 o 6.0
 
 
+// Decalarative.make 1.2 3.2 4.5 4.5 |> megaOptimise |> IL.opsToEmit
+
 let ilUnopt = IL.compile Functions.g
 
 // We're actually _marginally_ faster than the original!
 // Even with no optimisations.
 
 #time
-for _ in 0..100_000_000 do
+for _ in 0..100_000 do
     ignore <| ilUnopt 12.3
 #time
 
@@ -606,6 +608,6 @@ for _ in 0..100_000_000 do
 let ilOpt = Functions.g |> megaOptimise |> IL.compile
 
 #time
-for _ in 0..100_000_000 do
+for _ in 0..100_000 do
     ignore <| ilOpt 12.3
 #time
