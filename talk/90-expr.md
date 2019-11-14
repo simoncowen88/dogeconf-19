@@ -38,9 +38,9 @@ Write a declarative algebra that can outperform `float -> float` functions.
 
 --
 
-Algebra : set of types and methods acting on them
+Algebra : set of types and methods acting on them.
 
-Declarative : not an implementation, simply a description
+Declarative : not an implementation, simply a description.
 
 ---
 
@@ -54,7 +54,7 @@ In Tyburn, and many other scenarios, we have two distinct phases:
 
 ### Startup
 
-No particular performance requirements
+No particular performance requirements.
 
 Load data to construct things to run on...
 
@@ -64,9 +64,9 @@ Load data to construct things to run on...
 
 ### "Hot path"
 
-Performance is paramount
+Performance is paramount.
 
-No allocation allowed
+No allocation allowed.
 
 ???
 
@@ -107,7 +107,7 @@ A `float -> float` function, parameterised by 4 `float`s.
 
 &nbsp;
 
-There's no place to do slow up-front work
+There's no place to do slow up-front work.
 
 ---
 
@@ -165,12 +165,43 @@ let's use it!
 
 ```fsharp
 let make a b c d : float -> float =
-    let p1 = c - d
-    let p2 = a + b
-    fun x -> p1 * (p2 + x) * (p2 + x)
+    // do all the work you like here
+    fun x ->
+        // be as fast as possible here
+        (c - d) * (a + b + x) * (a + b + x)
 ```
 
+???
+
 Do some hand-optimising!
+
+---
+
+## Think a lot bit
+
+```fsharp
+let make a b c d : float -> float =
+    let p1 = c - d
+    fun x ->
+        // be as fast as possible here
+        p1 * (a + b + x) * (a + b + x)
+```
+
+---
+
+## Think a lot bit
+
+```fsharp
+let make a b c d : float -> float =
+    let p1 = c - d
+    let p2 = a + b
+    fun x ->
+        p1 * (p2 + x) * (p2 + x)
+```
+
+--
+
+How far can we go?
 
 ---
 
@@ -188,7 +219,14 @@ let make a b c d : float -> float =
         fun x -> p1 * (p2 + x) * (p2 + x)
 ```
 
-Do some more hand-optimising!
+--
+
+Look how far we've come...
+
+```fsharp
+let make a b c d (x : float) =
+    (c - d) * (a + b + x) * (a + b + x)
+```
 
 ---
 
@@ -224,6 +262,12 @@ But it is the wrong approach.
 
 ---
 
+class: center, middle
+
+# A different approach
+
+---
+
 ## The algebra
 
 ```fsharp
@@ -242,9 +286,9 @@ Var = input variable
 
 --
 
-Algebra : set of types and methods acting on them
+Algebra : set of types and methods acting on them.
 
-Declarative : not an implementation, simply a description
+Declarative : not an implementation, simply a description.
 
 ---
 
@@ -289,7 +333,11 @@ let (/) a b = Div (a, b)
 // fun x -> x + 1.0
 let add1 : Expr = Add (Var, (Const 1.0))
 let add1 : Expr = Var + (Const 1.0)
+```
 
+--
+
+```fsharp
 // fun x -> x * 2.0
 let times2 : Expr = Mult (Var, (Const 2.0))
 let times2 : Expr = Var * (Const 2.0)
@@ -303,6 +351,8 @@ let times2 : Expr = Var * (Const 2.0)
 let make a b c d : float -> float =
     fun x -> (c - d) * (a + b + x) * (a + b + x)
 ```
+
+--
 
 simply becomes...
 
