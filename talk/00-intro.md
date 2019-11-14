@@ -32,7 +32,7 @@ class: split-50
 ### SOME
 
 - F\# performance gotchas
-- F\# compiler optmisations
+- F\# compiler optimisations
 - Higher-level techniques for writing performant code
 
 ]
