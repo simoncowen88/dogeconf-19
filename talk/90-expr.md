@@ -113,6 +113,10 @@ let f : float -> float = make 1.2 2.3 3.4 4.5
 let x = f 98.7
 ```
 
+???
+
+f is a closure
+
 ---
 
 ## Don't think, just do
