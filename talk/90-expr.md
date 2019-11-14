@@ -1074,7 +1074,7 @@ make 0.1 1.2 2.3 3.4 |> opsToEmit
 ## The IL
 
 ```fsharp
-make 1.2 2.3 3.4 4.5 |> optimise |> opsToEmit
+make 1.2 2.3 4.5 4.5 |> optimise |> opsToEmit
 ```
 
 ```fsharp
